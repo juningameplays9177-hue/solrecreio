@@ -2,7 +2,7 @@ export function getServerEnvErrors(): string[] {
   const errors: string[] = [];
   if (!process.env.DATABASE_URL?.trim()) {
     errors.push(
-      "Configure DATABASE_URL no arquivo .env (copie de .env.example)."
+      "Configure DATABASE_URL no arquivo .env na raiz do projeto (veja .env.example). Reinicie o servidor após salvar. Em deploy (ex.: Vercel), defina DATABASE_URL nas variáveis de ambiente."
     );
   }
   if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET.length < 16) {
