@@ -1,0 +1,58 @@
+import { z } from "zod";
+
+/** Remove formatação e mantém só dígitos */
+export function digitsOnly(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+/** Validação de dígitos verificadores do CPF (Brasil) */
+export function isValidCpf(cpfRaw: string): boolean {
+  const cpf = digitsOnly(cpfRaw);
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(cpf[i]!, 10) * (10 - i);
+  let d1 = (sum * 10) % 11;
+  if (d1 === 10) d1 = 0;
+  if (d1 !== parseInt(cpf[9]!, 10)) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(cpf[i]!, 10) * (11 - i);
+  let d2 = (sum * 10) % 11;
+  if (d2 === 10) d2 = 0;
+  return d2 === parseInt(cpf[10]!, 10);
+}
+
+export const registerSchema = z.object({
+  name: z.string().min(2, "Nome muito curto").max(200),
+  cpf: z.string().refine((s) => digitsOnly(s).length === 11, "CPF incompleto"),
+  phone: z
+    .string()
+    .refine((s) => {
+      const d = digitsOnly(s);
+      return d.length >= 10 && d.length <= 11;
+    }, "Telefone inválido"),
+  email: z.string().email("E-mail inválido"),
+  password: z.string().min(6, "Senha: mínimo 6 caracteres"),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email("E-mail inválido"),
+  password: z.string().min(1, "Informe a senha"),
+});
+
+export const googleIdTokenSchema = z.object({
+  idToken: z.string().min(20, "Token inválido"),
+});
+
+/** Completar cadastro pós-Google: CPF e telefone (mesmas regras do cadastro completo). */
+export const completeProfileSchema = z.object({
+  cpf: z.string().refine((s) => digitsOnly(s).length === 11, "CPF incompleto"),
+  phone: z
+    .string()
+    .refine((s) => {
+      const d = digitsOnly(s);
+      return d.length >= 10 && d.length <= 11;
+    }, "Telefone inválido"),
+});

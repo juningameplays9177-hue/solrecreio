@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  /* Cores da identidade (foto): #FBC02D + #D32F2F — acentos e marca */
+  --brand-yellow: #fbc02d;
+  --brand-red: #d32f2f;
+
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #f8fafc;
+  --accent: var(--brand-red);
+  /* Hover só com o mesmo vermelho, levemente mais escuro via opacidade sobre fundo */
+  --accent-hover: color-mix(in srgb, var(--brand-red) 88%, #000);
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --error: #dc2626;
+  --success: #16a34a;
+  --input-bg: #f1f5f9;
+}
+
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  min-height: 100dvh;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+}
