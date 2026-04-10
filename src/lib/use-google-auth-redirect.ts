@@ -13,7 +13,7 @@ export function useGoogleAuthRedirect() {
     setGoogleError(null);
     if (!isFirebaseClientConfigured()) {
       setGoogleError(
-        "Login com Google não está configurado. No arquivo .env, defina NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN e NEXT_PUBLIC_FIREBASE_PROJECT_ID (copie do Firebase Console → Configurações do projeto → Seus apps). Opcional: NEXT_PUBLIC_FIREBASE_APP_ID. Reinicie o servidor após salvar."
+        "Login com Google não está configurado. No arquivo .env ou .env.local, defina NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN e NEXT_PUBLIC_FIREBASE_PROJECT_ID (Firebase Console → Configurações do projeto → Seus apps). Opcional: NEXT_PUBLIC_FIREBASE_APP_ID. Guarde e reinicie npm run dev."
       );
       return;
     }

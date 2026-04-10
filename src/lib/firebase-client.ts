@@ -1,3 +1,5 @@
+"use client";
+
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
@@ -26,7 +28,7 @@ export function isFirebaseClientConfigured(): boolean {
 function getApp(): FirebaseApp {
   if (!isFirebaseClientConfigured()) {
     throw new Error(
-      "Firebase não configurado. Defina NEXT_PUBLIC_FIREBASE_* no .env e reinicie o servidor."
+      "Firebase não configurado. Defina NEXT_PUBLIC_FIREBASE_* no .env ou .env.local e reinicie o servidor."
     );
   }
   const c = buildConfig();
