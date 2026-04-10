@@ -32,6 +32,9 @@ yarn-error.log*
 .env
 .env*.local
 
+# Produção Hostinger (credenciais — não commitar)
+env-hostinger-producao.txt
+
 # uploads locais (NF / cashback)
 /uploads
 
