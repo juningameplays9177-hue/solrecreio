@@ -51,8 +51,14 @@ export async function signSession(payload: SessionPayload): Promise<string> {
 }
 
 export async function verifySession(token: string): Promise<SessionPayload | null> {
+  let key: Uint8Array;
   try {
-    const { payload } = await jwtVerify(token, getSecretKey());
+    key = getSecretKey();
+  } catch {
+    return null;
+  }
+  try {
+    const { payload } = await jwtVerify(token, key);
     const sub = payload.sub;
     const email = payload.email;
     const name = payload.name;

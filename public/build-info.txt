@@ -1,0 +1,1 @@
+sol-do-recreio | firebase-client: hardcoded web config (no env required for popup) | 2026-04-10

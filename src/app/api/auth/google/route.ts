@@ -27,11 +27,15 @@ type SessionUser = {
   phone: string | null;
 };
 
+const jsonNoStore = {
+  headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" },
+} as const;
+
 export async function POST(request: Request) {
   try {
     const envErrs = [...getServerEnvErrors(), ...getFirebaseAuthServerEnvErrors()];
     if (envErrs.length > 0) {
-      return NextResponse.json({ error: envErrs[0] }, { status: 503 });
+      return NextResponse.json({ error: envErrs[0] }, { status: 503, ...jsonNoStore });
     }
 
     const body = await request.json();
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
       const first =
         Object.values(parsed.error.flatten().fieldErrors).flat()[0] ??
         "Token inválido";
-      return NextResponse.json({ error: first }, { status: 400 });
+      return NextResponse.json({ error: first }, { status: 400, ...jsonNoStore });
     }
 
     const decoded = await verifyFirebaseIdToken(parsed.data.idToken);
@@ -48,13 +52,13 @@ export async function POST(request: Request) {
     if (!emailRaw || typeof emailRaw !== "string") {
       return NextResponse.json(
         { error: "Conta Google sem e-mail. Não é possível entrar." },
-        { status: 401 }
+        { status: 401, ...jsonNoStore }
       );
     }
     if (decoded.email_verified === false) {
       return NextResponse.json(
         { error: "Confirme o e-mail na sua conta Google antes de continuar." },
-        { status: 401 }
+        { status: 401, ...jsonNoStore }
       );
     }
 
@@ -78,8 +82,15 @@ export async function POST(request: Request) {
          VALUES (?, ?, ?, NULL, NULL, 'CLIENT')`,
         [email, passwordHash, displayName]
       );
-      const rawId = ins.insertId;
-      const insertId = typeof rawId === "bigint" ? Number(rawId) : Number(rawId);
+      let rawId = ins.insertId;
+      let insertId = typeof rawId === "bigint" ? Number(rawId) : Number(rawId);
+      if (!Number.isFinite(insertId) || insertId <= 0) {
+        const [idRows] = await pool.query<RowDataPacket[]>(
+          "SELECT LAST_INSERT_ID() AS id"
+        );
+        const lid = (idRows[0] as { id?: unknown } | undefined)?.id;
+        insertId = typeof lid === "bigint" ? Number(lid) : Number(lid);
+      }
       if (!Number.isFinite(insertId) || insertId <= 0) {
         throw new Error("Não foi possível criar o usuário (ID inválido).");
       }
@@ -101,11 +112,14 @@ export async function POST(request: Request) {
       role: user.role,
       profileComplete,
     });
-    const res = NextResponse.json({
-      ok: true,
-      role: user.role,
-      profileComplete,
-    });
+    const res = NextResponse.json(
+      {
+        ok: true,
+        role: user.role,
+        profileComplete,
+      },
+      jsonNoStore
+    );
     return applySessionCookie(res, token);
   } catch (e) {
     console.error(e);
@@ -113,7 +127,7 @@ export async function POST(request: Request) {
       {
         error: apiErrorMessage(e, "Erro ao entrar com Google. Tente novamente."),
       },
-      { status: 500 }
+      { status: 500, ...jsonNoStore }
     );
   }
 }

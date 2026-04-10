@@ -2,19 +2,18 @@
 
 import Link from "next/link";
 import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
-import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
 
 export function WelcomeAuthCard() {
   const { runGoogleLogin, googleLoading, googleError } = useGoogleAuthRedirect();
 
   return (
     <div className="mt-10 w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm sm:mt-12 sm:p-8">
-      <GoogleSignInButton loading={googleLoading} onPress={runGoogleLogin} />
-      {googleError && (
-        <p className="mt-3 text-sm text-[var(--error)]" role="alert">
-          {googleError}
-        </p>
-      )}
+      <HomeGoogleAuthSection
+        googleLoading={googleLoading}
+        googleError={googleError}
+        runGoogleLogin={runGoogleLogin}
+      />
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center" aria-hidden>
           <div className="w-full border-t border-[var(--border)]" />

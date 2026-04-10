@@ -1,49 +1,26 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { isFirebaseClientConfigured, signInWithGoogle } from "@/lib/firebase-client";
+import { startGoogleSignInRedirect } from "@/lib/firebase-client";
+import { scrubStaleGoogleConfigMessage } from "@/lib/scrub-stale-google-config-message";
 
 export function useGoogleAuthRedirect() {
-  const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
   const runGoogleLogin = useCallback(async () => {
     setGoogleError(null);
-    if (!isFirebaseClientConfigured()) {
-      setGoogleError(
-        "Login com Google não está configurado. No arquivo .env ou .env.local, defina NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN e NEXT_PUBLIC_FIREBASE_PROJECT_ID (Firebase Console → Configurações do projeto → Seus apps). Opcional: NEXT_PUBLIC_FIREBASE_APP_ID. Guarde e reinicie npm run dev."
-      );
-      return;
-    }
     setGoogleLoading(true);
     try {
-      const idToken = await signInWithGoogle();
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setGoogleError(
-          typeof data.error === "string" ? data.error : "Falha ao entrar com Google"
-        );
-        return;
-      }
-      if (data.role === "ADMIN") router.push("/admin");
-      else if (data.profileComplete === false) router.push("/completar-cadastro");
-      else router.push("/painel");
-      router.refresh();
+      await startGoogleSignInRedirect();
+      // A página redireciona para o Google; o retorno é tratado em GoogleRedirectResultHandler.
     } catch (err) {
-      setGoogleError(
-        err instanceof Error ? err.message : "Não foi possível abrir o login do Google."
-      );
-    } finally {
+      const msg =
+        err instanceof Error ? err.message : "Não foi possível iniciar o login do Google.";
+      setGoogleError(scrubStaleGoogleConfigMessage(msg));
       setGoogleLoading(false);
     }
-  }, [router]);
+  }, []);
 
   return { runGoogleLogin, googleLoading, googleError, setGoogleError };
 }
