@@ -82,7 +82,7 @@ export async function POST(request: Request) {
          VALUES (?, ?, ?, NULL, NULL, 'CLIENT')`,
         [email, passwordHash, displayName]
       );
-      let rawId = ins.insertId;
+      const rawId = ins.insertId;
       let insertId = typeof rawId === "bigint" ? Number(rawId) : Number(rawId);
       if (!Number.isFinite(insertId) || insertId <= 0) {
         const [idRows] = await pool.query<RowDataPacket[]>(
