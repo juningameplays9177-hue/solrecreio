@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPool } from "@/lib/db";
+import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
 import type { RowDataPacket } from "mysql2";
 
 type Props = { params: Promise<{ id: string }> };
@@ -21,6 +22,13 @@ export default async function AdminClienteDetailPage({ params }: Props) {
   const [invoices] = await pool.query<RowDataPacket[]>(
     `SELECT id, amount, credited_amount, status, original_filename, created_at, reviewed_at, admin_note
      FROM cashback_invoices WHERE user_id = ? ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  await ensureCashbackRedemptionsSchema(pool);
+  const [redemptions] = await pool.query<RowDataPacket[]>(
+    `SELECT id, amount, status, coupon_code, created_at, reviewed_at, admin_note
+     FROM cashback_redemptions WHERE user_id = ? ORDER BY created_at DESC`,
     [userId]
   );
 
@@ -94,6 +102,44 @@ export default async function AdminClienteDetailPage({ params }: Props) {
                   {inv.admin_note && (
                     <p className="mt-1 text-xs text-[var(--muted)]">
                       Obs.: {String(inv.admin_note)}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <h2 className="mt-8 text-center text-lg font-medium">Resgates e cupons</h2>
+        {redemptions.length === 0 ? (
+          <p className="mt-2 text-center text-sm text-[var(--muted)]">Nenhum resgate ainda.</p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-left">
+            {redemptions.map((item) => {
+              const amount = Number(item.amount);
+              const created = item.created_at
+                ? new Date(item.created_at as string).toLocaleString("pt-BR")
+                : "";
+              return (
+                <li
+                  key={Number(item.id)}
+                  className="rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      Resgate: R$ {amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[var(--brand-red)]">{String(item.status)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--muted)]">{created}</p>
+                  {item.coupon_code && (
+                    <p className="mt-1 text-xs font-mono text-emerald-700">
+                      Cupom: {String(item.coupon_code)}
+                    </p>
+                  )}
+                  {item.admin_note && (
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      Obs.: {String(item.admin_note)}
                     </p>
                   )}
                 </li>

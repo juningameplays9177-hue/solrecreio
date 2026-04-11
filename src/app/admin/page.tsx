@@ -7,6 +7,7 @@ export default async function AdminHomePage() {
   const session = await getSessionFromCookies();
 
   let pendingNf = 0;
+  let pendingRedemptions = 0;
   let totalClients = 0;
   try {
     const pool = getPool();
@@ -14,6 +15,10 @@ export default async function AdminHomePage() {
       "SELECT COUNT(*) AS c FROM cashback_invoices WHERE status = 'PENDING'"
     );
     pendingNf = Number(p[0]?.c ?? 0);
+    const [r] = await pool.query<RowDataPacket[]>(
+      "SELECT COUNT(*) AS c FROM cashback_redemptions WHERE status = 'PENDING'"
+    );
+    pendingRedemptions = Number(r[0]?.c ?? 0);
     const [c] = await pool.query<RowDataPacket[]>(
       "SELECT COUNT(*) AS c FROM users WHERE role = 'CLIENT'"
     );
@@ -34,12 +39,18 @@ export default async function AdminHomePage() {
           <span className="text-[var(--foreground)]">{session?.email}</span>
         </p>
 
-        <div className="mx-auto mt-8 grid w-full max-w-2xl grid-cols-2 gap-4 md:mt-10 md:gap-6">
+        <div className="mx-auto mt-8 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3 md:mt-10 md:gap-6">
           <div className="rounded-2xl border border-[var(--border)] bg-slate-100 px-4 py-6 text-center md:py-8">
             <p className="text-4xl font-semibold tabular-nums text-[var(--brand-yellow)] md:text-5xl">
               {pendingNf}
             </p>
             <p className="mt-2 text-sm text-[var(--muted)] md:text-base">NF pendentes</p>
+          </div>
+          <div className="rounded-2xl border border-[var(--border)] bg-slate-100 px-4 py-6 text-center md:py-8">
+            <p className="text-4xl font-semibold tabular-nums text-[var(--brand-red)] md:text-5xl">
+              {pendingRedemptions}
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted)] md:text-base">Resgates pendentes</p>
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-slate-100 px-4 py-6 text-center md:py-8">
             <p className="text-4xl font-semibold tabular-nums text-[var(--brand-red)] md:text-5xl">
@@ -55,6 +66,12 @@ export default async function AdminHomePage() {
             className="touch-target inline-flex w-full items-center justify-center rounded-2xl bg-[var(--accent)] px-6 py-4 text-base font-semibold text-white hover:bg-[var(--accent-hover)]"
           >
             Aprovação de NF
+          </Link>
+          <Link
+            href="/admin/resgates"
+            className="touch-target inline-flex w-full items-center justify-center rounded-2xl border border-[var(--border)] bg-white px-6 py-4 text-base font-semibold text-[var(--foreground)] hover:border-[var(--accent)]"
+          >
+            Aprovar resgates de cashback
           </Link>
         </div>
       </div>

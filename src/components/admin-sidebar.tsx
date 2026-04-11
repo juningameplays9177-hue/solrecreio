@@ -15,6 +15,8 @@ const items: { href: string; label: string }[] = [
 
   { href: "/admin/cashback", label: "Aprovação de NF" },
 
+  { href: "/admin/resgates", label: "Resgates" },
+
   { href: "/admin/clientes", label: "Clientes" },
 
   { href: "/admin/usuarios", label: "Usuario ADM" },

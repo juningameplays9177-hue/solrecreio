@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { GoogleRedirectResultHandler } from "@/components/google-redirect-result-handler";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,6 +16,12 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Sol do Recreio — Acesso",
   description: "Login e cadastro",
+  applicationName: "Sol do Recreio",
+  appleWebApp: {
+    capable: true,
+    title: "Sol do Recreio",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -32,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} ${inter.variable}`}>
+        <PwaRegister />
         <GoogleRedirectResultHandler />
         {children}
       </body>

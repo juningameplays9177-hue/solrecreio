@@ -4,6 +4,9 @@ import { getSessionFromCookies } from "@/lib/auth";
 import { getPool } from "@/lib/db";
 import { ClientNotifications } from "@/components/client-notifications";
 import { PainelCashbackForm } from "@/components/painel-cashback-form";
+import { PainelCashbackRedemptionForm } from "@/components/painel-cashback-redemption-form";
+import { CashbackRedemptionsList } from "@/components/cashback-redemptions-list";
+import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
 import type { RowDataPacket } from "mysql2";
 
 function statusBadge(status: string) {
@@ -79,6 +82,7 @@ export default async function PainelPage() {
   const userId = Number(session.sub);
   let balance = 0;
   let invoices: RowDataPacket[] = [];
+  let redemptions: RowDataPacket[] = [];
   let dbError: string | null = null;
 
   try {
@@ -96,6 +100,17 @@ export default async function PainelPage() {
       [userId]
     );
     invoices = invRows;
+
+    await ensureCashbackRedemptionsSchema(pool);
+    const [redemptionRows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, amount, status, coupon_code, admin_note, created_at, reviewed_at
+       FROM cashback_redemptions
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 30`,
+      [userId]
+    );
+    redemptions = redemptionRows;
   } catch {
     dbError =
       "Banco desatualizado: rode no terminal npm.cmd run db:migrate-cashback e reinicie o app.";
@@ -128,6 +143,7 @@ export default async function PainelPage() {
               <ClientNotifications />
             </div>
             <PainelCashbackForm />
+            <PainelCashbackRedemptionForm availableBalance={balance} />
             <div className="mt-8">
               <p className="text-sm font-medium text-[var(--foreground)] sm:text-base">
                 Suas solicitações
@@ -161,6 +177,30 @@ export default async function PainelPage() {
                   })}
                 </ul>
               )}
+            </div>
+            <div className="mt-8">
+              <p className="text-sm font-medium text-[var(--foreground)] sm:text-base">
+                Seus resgates e cupons
+              </p>
+              <CashbackRedemptionsList
+                redemptions={redemptions.map((row) => ({
+                  id: Number(row.id),
+                  amount: Number(row.amount),
+                  status: String(row.status),
+                  coupon_code: row.coupon_code == null ? null : String(row.coupon_code),
+                  admin_note: row.admin_note == null ? null : String(row.admin_note),
+                  created_at:
+                    row.created_at instanceof Date
+                      ? row.created_at.toISOString()
+                      : String(row.created_at),
+                  reviewed_at:
+                    row.reviewed_at instanceof Date
+                      ? row.reviewed_at.toISOString()
+                      : row.reviewed_at == null
+                        ? null
+                        : String(row.reviewed_at),
+                }))}
+              />
             </div>
           </>
         )}
