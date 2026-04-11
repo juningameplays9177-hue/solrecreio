@@ -61,20 +61,14 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-white">
-      {/* Faixa amarela: altura ~42vh — separação um pouco acima do meio da tela */}
-      <header className="relative flex min-h-[42vh] flex-col items-center justify-center bg-[var(--brand-yellow)] px-6 pb-10 pt-12 sm:min-h-[40vh] sm:pt-16">
-        <h1 className="max-w-3xl text-center text-4xl font-extrabold tracking-tight text-[var(--brand-red)] sm:text-5xl md:text-6xl">
-          Cadastro de cliente
-        </h1>
-        <p className="mt-5 max-w-lg text-center text-base font-medium text-[var(--brand-red)] sm:text-lg">
-          Preencha seus dados abaixo. O cadastro público é apenas para clientes.
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-4 py-10 text-[15px] md:text-base">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm sm:p-8">
+        <h1 className="text-xl font-semibold sm:text-2xl">Cadastro de cliente</h1>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Preencha seus dados abaixo. O cadastro publico e apenas para clientes.
         </p>
-      </header>
 
-      <main className="flex flex-1 flex-col items-center bg-white px-4 pb-12 pt-10 sm:px-6">
-        <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm sm:p-8">
-          <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium">
                 Nome completo
@@ -168,20 +162,19 @@ export default function CadastroPage() {
             >
               {loading ? "Cadastrando…" : "Criar conta"}
             </button>
-          </form>
-          <p className="mt-6 text-center text-sm text-[var(--muted)]">
-            Já tem conta?{" "}
-            <Link href="/entrar" className="font-medium text-[var(--accent)] hover:underline">
-              Entrar
-            </Link>
-          </p>
-          <p className="mt-4 text-center">
-            <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]">
-              ← Voltar ao início
-            </Link>
-          </p>
-        </div>
-      </main>
-    </div>
+        </form>
+        <p className="mt-6 text-center text-sm text-[var(--muted)]">
+          Já tem conta?{" "}
+          <Link href="/entrar" className="font-medium text-[var(--accent)] hover:underline">
+            Entrar
+          </Link>
+        </p>
+        <p className="mt-4 text-center">
+          <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]">
+            ← Voltar ao início
+          </Link>
+        </p>
+      </div>
+    </main>
   );
 }
