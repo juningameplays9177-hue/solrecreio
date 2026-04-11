@@ -1,9 +1,12 @@
-const CACHE_VERSION = "sol-do-recreio-v3";
+/**
+ * PWA offline mínimo — NÃO interceptar /_next/* (JS/CSS com hash).
+ * Interceptar /_next/static mistura builds e causa 404 após cada deploy
+ * (HTML ou cache pede chunk antigo que já não existe no servidor).
+ */
+const CACHE_VERSION = "sol-do-recreio-v4-no-next-cache";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline";
-/** Não precachear rotas App Router (/entrar, /cadastro): HTML muda a cada deploy e referências a /_next/static ficam desatualizadas, causando página sem CSS. */
 const PRECACHE_URLS = [
-  "/",
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/icon.svg",
@@ -58,6 +61,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  /** Deixar o browser + Cache-Control do Next (sem SW em cima). */
+  if (url.pathname.startsWith("/_next/")) {
+    return;
+  }
+
   if (isApiRequest(url) || isProtectedRoute(url)) {
     event.respondWith(fetch(request));
     return;
@@ -65,7 +73,7 @@ self.addEventListener("fetch", (event) => {
 
   if (isHtmlRequest(request)) {
     event.respondWith(
-      fetch(request).catch(async () => {
+      fetch(request, { cache: "no-store" }).catch(async () => {
         const cache = await caches.open(STATIC_CACHE);
         return (await cache.match(OFFLINE_URL)) || Response.error();
       })
@@ -74,7 +82,6 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (
-    url.pathname.startsWith("/_next/static/") ||
     url.pathname === "/icon.svg" ||
     url.pathname === "/icon-192.png" ||
     url.pathname === "/icon-512.png" ||
