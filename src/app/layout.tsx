@@ -9,6 +9,9 @@ const inter = Inter({
   display: "swap",
 });
 
+// Evita HTML estático antigo em CDN apontando para chunks/CSS de builds anteriores.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Sol do Recreio — Acesso",
   description: "Login e cadastro",
