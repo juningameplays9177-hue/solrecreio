@@ -10,6 +10,9 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0",
     "lint": "eslint",
+    "android:add": "npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
     "db:init": "node scripts/init-db.mjs",
     "db:seed-admin": "node scripts/seed-admin.mjs",
     "db:setup": "node scripts/init-db.mjs && node scripts/seed-admin.mjs",
@@ -22,6 +25,9 @@
     "firebase:enable-webframeworks": "firebase experiments:enable webframeworks"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "bcryptjs": "^3.0.2",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.7.0",

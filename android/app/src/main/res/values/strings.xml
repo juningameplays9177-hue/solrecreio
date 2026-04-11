@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sol do Recreio</string>
+    <string name="title_activity_main">Sol do Recreio</string>
+    <string name="package_name">com.soldorecreio.app</string>
+    <string name="custom_url_scheme">com.soldorecreio.app</string>
+</resources>
