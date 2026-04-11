@@ -1,10 +1,9 @@
-const CACHE_VERSION = "sol-do-recreio-v2";
+const CACHE_VERSION = "sol-do-recreio-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline";
+/** Não precachear rotas App Router (/entrar, /cadastro): HTML muda a cada deploy e referências a /_next/static ficam desatualizadas, causando página sem CSS. */
 const PRECACHE_URLS = [
   "/",
-  "/entrar",
-  "/cadastro",
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/icon.svg",
@@ -83,13 +82,20 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/manifest.webmanifest"
   ) {
     event.respondWith(
-      caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        if (cached) return cached;
-        const response = await fetch(request);
-        cache.put(request, response.clone());
-        return response;
-      })
+      (async () => {
+        const cache = await caches.open(STATIC_CACHE);
+        try {
+          const response = await fetch(request);
+          if (response.ok) {
+            await cache.put(request, response.clone());
+          }
+          return response;
+        } catch {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          return Response.error();
+        }
+      })()
     );
   }
 });

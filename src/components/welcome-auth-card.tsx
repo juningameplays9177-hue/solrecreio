@@ -30,7 +30,7 @@ export function WelcomeAuthCard() {
           Entrar
         </Link>
         <Link
-          href="https://skyblue-lark-202006.hostingersite.com/cadastro?"
+          href="/cadastro"
           className="touch-target inline-flex min-h-[52px] min-w-[10rem] items-center justify-center rounded-xl border border-[var(--border)] bg-white px-8 py-4 text-base font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] sm:min-w-[11rem] sm:text-lg"
         >
           Cadastrar
