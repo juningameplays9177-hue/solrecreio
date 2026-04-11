@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
 import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
-import { InstallAppButton } from "@/components/install-app-button";
 
 export function WelcomeAuthCard() {
   const { runGoogleLogin, googleLoading, googleError } = useGoogleAuthRedirect();
@@ -37,7 +36,6 @@ export function WelcomeAuthCard() {
           Cadastrar
         </Link>
       </div>
-      <InstallAppButton />
     </div>
   );
 }
