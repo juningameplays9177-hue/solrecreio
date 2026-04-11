@@ -32,11 +32,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: "/favicon.ico", destination: "/icon.svg" }];
   },
-  /** Evita HTML antigo na CDN/browser a referenciar chunks de build anterior (404 em /_next/static). */
+  /** Chunks com hash: cache longo. HTML sem cache fica no middleware. */
   async headers() {
-    const noStore = [
-      { key: "Cache-Control", value: "private, no-cache, no-store, must-revalidate" },
-    ] as const;
     return [
       {
         source: "/_next/static/:path*",
@@ -44,13 +41,6 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
-      { source: "/", headers: [...noStore] },
-      { source: "/entrar", headers: [...noStore] },
-      { source: "/cadastro", headers: [...noStore] },
-      { source: "/offline", headers: [...noStore] },
-      { source: "/completar-cadastro", headers: [...noStore] },
-      { source: "/painel/:path*", headers: [...noStore] },
-      { source: "/admin/:path*", headers: [...noStore] },
     ];
   },
 };
