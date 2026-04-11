@@ -123,10 +123,7 @@ function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
         Não tem conta?{" "}
-        <Link
-          href="https://skyblue-lark-202006.hostingersite.com/cadastro?"
-          className="font-medium text-[var(--accent)] hover:underline"
-        >
+        <Link href="/cadstro?" className="font-medium text-[var(--accent)] hover:underline">
           Cadastre-se
         </Link>{" "}
         (cliente)
