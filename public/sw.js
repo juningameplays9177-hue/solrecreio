@@ -1,7 +1,17 @@
-const CACHE_VERSION = "sol-do-recreio-v1";
+const CACHE_VERSION = "sol-do-recreio-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline";
-const PRECACHE_URLS = ["/", "/entrar", "/cadastro", OFFLINE_URL, "/pwa-icon.svg"];
+const PRECACHE_URLS = [
+  "/",
+  "/entrar",
+  "/cadastro",
+  OFFLINE_URL,
+  "/manifest.webmanifest",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -66,8 +76,11 @@ self.addEventListener("fetch", (event) => {
 
   if (
     url.pathname.startsWith("/_next/static/") ||
-    url.pathname === "/pwa-icon.svg" ||
-    url.pathname === "/icon.svg"
+    url.pathname === "/icon.svg" ||
+    url.pathname === "/icon-192.png" ||
+    url.pathname === "/icon-512.png" ||
+    url.pathname === "/apple-touch-icon.png" ||
+    url.pathname === "/manifest.webmanifest"
   ) {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
