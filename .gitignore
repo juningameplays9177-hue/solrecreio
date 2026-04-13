@@ -1,0 +1,49 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# Firebase CLI
+.firebase/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env
+.env*.local
+
+# Produção Hostinger (credenciais — não commitar)
+env-hostinger-producao.txt
+
+# uploads locais (NF / cashback)
+/uploads
+
+# Chave privada Firebase (nunca commitar)
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+
+# typescript
+*.tsbuildinfo

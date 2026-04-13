@@ -1,0 +1,56 @@
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import { GoogleRedirectResultHandler } from "@/components/google-redirect-result-handler";
+import { PwaRegister } from "@/components/pwa-register";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+// Evita HTML estático antigo em CDN apontando para chunks/CSS de builds anteriores.
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Sol do Recreio — Acesso",
+  description: "Login e cadastro",
+  applicationName: "Sol do Recreio",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Sol do Recreio",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#fbc02d",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="pt-BR">
+      <body className={`${inter.className} ${inter.variable}`}>
+        <PwaRegister />
+        <GoogleRedirectResultHandler />
+        {children}
+      </body>
+    </html>
+  );
+}
