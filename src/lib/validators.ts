@@ -33,20 +33,67 @@ export const strongPasswordSchema = z
   .regex(/[0-9]/, "Inclua pelo menos um número")
   .regex(/[^A-Za-z0-9]/, "Inclua pelo menos um símbolo ou caractere especial");
 
-/** Cadastro público: nome, e-mail e senha forte (CPF/telefone em /completar-cadastro). */
-export const emailRegisterSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Nome muito curto")
-    .max(200, "Nome muito longo")
-    .transform((s) => s.trim().replace(/\s+/g, " ")),
-  email: z
-    .string()
-    .email("E-mail inválido")
-    .max(255)
-    .transform((s) => s.toLowerCase().trim()),
-  password: strongPasswordSchema,
-});
+/** Cadastro público: nome, e-mail, senha + confirmação; CPF e telefone opcionais. */
+export const registrationFormSchema = z
+  .object({
+    name: z
+      .string()
+      .min(2, "Nome muito curto")
+      .max(200, "Nome muito longo")
+      .transform((s) => s.trim().replace(/\s+/g, " ")),
+    email: z
+      .string()
+      .email("E-mail inválido")
+      .max(255)
+      .transform((s) => s.toLowerCase().trim()),
+    password: strongPasswordSchema,
+    passwordConfirm: z.string().min(1, "Confirme a senha"),
+    cpf: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .refine((d) => d.password === d.passwordConfirm, {
+    message: "As senhas não coincidem",
+    path: ["passwordConfirm"],
+  })
+  .superRefine((d, ctx) => {
+    const cpf = digitsOnly(d.cpf ?? "");
+    if (cpf.length > 0) {
+      if (cpf.length !== 11) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "CPF deve ter 11 dígitos",
+          path: ["cpf"],
+        });
+      } else if (!isValidCpf(cpf)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "CPF inválido",
+          path: ["cpf"],
+        });
+      }
+    }
+    const tel = digitsOnly(d.phone ?? "");
+    if (tel.length > 0) {
+      if (tel.length < 10 || tel.length > 11) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Telefone deve ter 10 ou 11 dígitos",
+          path: ["phone"],
+        });
+      }
+    }
+  })
+  .transform((d) => {
+    const cpf = digitsOnly(d.cpf ?? "");
+    const phone = digitsOnly(d.phone ?? "");
+    return {
+      name: d.name,
+      email: d.email,
+      password: d.password,
+      cpf: cpf.length === 11 ? cpf : null,
+      phone: phone.length >= 10 && phone.length <= 11 ? phone : null,
+    };
+  });
 
 export const loginSchema = z.object({
   email: z.string().email("E-mail inválido").max(255),

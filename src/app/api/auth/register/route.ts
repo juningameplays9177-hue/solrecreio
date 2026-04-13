@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getPool } from "@/lib/db";
 import { applySessionCookie, clientProfileComplete, signSession } from "@/lib/auth";
-import { emailRegisterSchema } from "@/lib/validators";
+import { registrationFormSchema } from "@/lib/validators";
 import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const parsed = emailRegisterSchema.safeParse(body);
+    const parsed = registrationFormSchema.safeParse(body);
     if (!parsed.success) {
       const first =
         Object.values(parsed.error.flatten().fieldErrors).flat()[0] ??
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: first }, { status: 400 });
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, cpf, phone } = parsed.data;
     const name = sanitizeDisplayName(parsed.data.name);
 
     const pool = getPool();
@@ -56,12 +56,25 @@ export async function POST(request: Request) {
       );
     }
 
+    if (cpf) {
+      const [existingCpf] = await pool.query<RowDataPacket[]>(
+        "SELECT id FROM users WHERE cpf = ? LIMIT 1",
+        [cpf]
+      );
+      if (existingCpf.length > 0) {
+        return NextResponse.json(
+          { error: "Este CPF já está cadastrado." },
+          { status: 409 }
+        );
+      }
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO users (email, password_hash, name, cpf, phone, role)
-       VALUES (?, ?, ?, NULL, NULL, 'CLIENT')`,
-      [email, passwordHash, name]
+       VALUES (?, ?, ?, ?, ?, 'CLIENT')`,
+      [email, passwordHash, name, cpf, phone]
     );
 
     const rawId = result.insertId;
@@ -71,7 +84,7 @@ export async function POST(request: Request) {
       throw new Error("Não foi possível concluir o cadastro (ID inválido).");
     }
 
-    const profileComplete = clientProfileComplete("CLIENT", null, null);
+    const profileComplete = clientProfileComplete("CLIENT", cpf, phone);
     const token = await signSession({
       sub: String(insertId),
       email,

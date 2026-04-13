@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AuthAccessShell } from "@/components/auth/auth-access-shell";
 import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
 import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
-import { emailRegisterSchema, strongPasswordSchema } from "@/lib/validators";
+import { registrationFormSchema, strongPasswordSchema } from "@/lib/validators";
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3.5 text-[15px] text-white outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-slate-500 focus:border-[#fbc02d]/50 focus:bg-black/55 focus:ring-2 focus:ring-[#fbc02d]/25";
@@ -16,6 +16,24 @@ const labelClass =
 
 const googleBtnDark =
   "border-white/20 bg-white text-slate-900 shadow-md hover:bg-slate-100 hover:shadow-lg";
+
+function formatCpf(value: string) {
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9)
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function formatPhoneBr(value: string) {
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d.length ? `(${d}` : "";
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10)
+    return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
 
 function passwordHints(password: string): { ok: boolean; label: string }[] {
   return [
@@ -34,6 +52,9 @@ export function RegisterForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,10 +67,21 @@ export function RegisterForm() {
       setError(null);
       setSuccess(null);
 
-      const pre = emailRegisterSchema.safeParse({ name, email, password });
+      const pre = registrationFormSchema.safeParse({
+        name,
+        email,
+        password,
+        passwordConfirm,
+        cpf,
+        phone,
+      });
       if (!pre.success) {
+        const flat = pre.error.flatten();
         const first =
-          Object.values(pre.error.flatten().fieldErrors).flat()[0] ??
+          Object.values(flat.fieldErrors)
+            .flat()
+            .find((m): m is string => typeof m === "string") ??
+          flat.formErrors[0] ??
           "Verifique os dados.";
         setError(first);
         return;
@@ -60,7 +92,14 @@ export function RegisterForm() {
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            passwordConfirm,
+            cpf,
+            phone,
+          }),
         });
         const data = (await res.json().catch(() => ({}))) as {
           error?: string;
@@ -83,7 +122,7 @@ export function RegisterForm() {
         setLoading(false);
       }
     },
-    [email, name, password, router]
+    [cpf, email, name, password, passwordConfirm, phone, router]
   );
 
   const pwdPreview = strongPasswordSchema.safeParse(password);
@@ -91,7 +130,7 @@ export function RegisterForm() {
   return (
     <AuthAccessShell
       title="Crie sua conta"
-      subtitle="Use o Google ou cadastre-se com e-mail e senha. Depois pedimos CPF e telefone para concluir."
+      subtitle="Use o Google ou cadastre-se com e-mail e senha. CPF e telefone são opcionais aqui; se preencher os dois corretamente, o cadastro já fica completo."
       footer={
         <p>
           Já tem conta?{" "}
@@ -195,6 +234,66 @@ export function RegisterForm() {
               Ajuste a senha para atender a todos os requisitos.
             </p>
           ) : null}
+        </div>
+        <div>
+          <label htmlFor="reg-password2" className={labelClass}>
+            Confirmar senha
+          </label>
+          <input
+            id="reg-password2"
+            name="passwordConfirm"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            className={inputClass}
+            placeholder="Repita a senha"
+          />
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Opcional
+          </p>
+          <p className="mb-4 text-xs leading-relaxed text-slate-500">
+            Se informar CPF e telefone válidos agora, você já acessa o painel sem a
+            etapa “completar cadastro”.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="reg-cpf" className={labelClass}>
+                CPF
+              </label>
+              <input
+                id="reg-cpf"
+                name="cpf"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={cpf}
+                onChange={(e) => setCpf(formatCpf(e.target.value))}
+                className={inputClass}
+                placeholder="000.000.000-00"
+              />
+            </div>
+            <div>
+              <label htmlFor="reg-phone" className={labelClass}>
+                Telefone (WhatsApp)
+              </label>
+              <input
+                id="reg-phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(formatPhoneBr(e.target.value))}
+                className={inputClass}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+          </div>
         </div>
 
         {error ? (
