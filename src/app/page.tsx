@@ -6,7 +6,9 @@ import { WelcomeAuthCard } from "@/components/welcome-auth-card";
 export default async function Home() {
   const session = await getSessionFromCookies();
   if (session?.role === "ADMIN") redirect("/admin");
-  if (session?.role === "CLIENT") redirect("/painel");
+  if (session?.role === "CLIENT") {
+    redirect(session.profileComplete ? "/painel" : "/completar-cadastro");
+  }
 
   return (
     <div className="flex min-h-dvh flex-col">

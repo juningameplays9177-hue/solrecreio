@@ -3,11 +3,28 @@ import { redirect } from "next/navigation";
 import { getSessionFromCookies } from "@/lib/auth";
 import { getPool } from "@/lib/db";
 import { ClientNotifications } from "@/components/client-notifications";
+import { PainelProfileCompletionCard } from "@/components/painel-profile-completion-card";
 import { PainelCashbackForm } from "@/components/painel-cashback-form";
 import { PainelCashbackRedemptionForm } from "@/components/painel-cashback-redemption-form";
 import { CashbackRedemptionsList } from "@/components/cashback-redemptions-list";
 import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
 import type { RowDataPacket } from "mysql2";
+
+function formatCpfBr(digits: string | null | undefined): string | null {
+  if (!digits) return null;
+  const c = String(digits).replace(/\D/g, "");
+  if (c.length !== 11) return digits;
+  return `${c.slice(0, 3)}.${c.slice(3, 6)}.${c.slice(6, 9)}-${c.slice(9)}`;
+}
+
+function formatPhoneDigits(d: string | null | undefined): string | null {
+  if (!d) return null;
+  const n = String(d).replace(/\D/g, "");
+  if (n.length < 10) return d;
+  if (n.length === 10)
+    return `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`;
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
+}
 
 function statusBadge(status: string) {
   const y = "border-[var(--brand-yellow)] bg-[var(--brand-yellow)]/35 text-[var(--brand-red)]";
@@ -81,6 +98,8 @@ export default async function PainelPage() {
 
   const userId = Number(session.sub);
   let balance = 0;
+  let dbCpf: string | null = null;
+  let dbPhone: string | null = null;
   let invoices: RowDataPacket[] = [];
   let redemptions: RowDataPacket[] = [];
   let dbError: string | null = null;
@@ -88,10 +107,18 @@ export default async function PainelPage() {
   try {
     const pool = getPool();
     const [balRows] = await pool.query<RowDataPacket[]>(
-      "SELECT cashback_balance FROM users WHERE id = ? LIMIT 1",
+      "SELECT cashback_balance, cpf, phone FROM users WHERE id = ? LIMIT 1",
       [userId]
     );
     balance = Number(balRows[0]?.cashback_balance ?? 0);
+    dbCpf =
+      balRows[0]?.cpf == null || balRows[0]?.cpf === ""
+        ? null
+        : String(balRows[0].cpf);
+    dbPhone =
+      balRows[0]?.phone == null || balRows[0]?.phone === ""
+        ? null
+        : String(balRows[0].phone);
 
     const [invRows] = await pool.query<RowDataPacket[]>(
       `SELECT id, amount, status, original_filename, created_at
@@ -126,6 +153,38 @@ export default async function PainelPage() {
         <p className="mt-3 break-words text-sm text-[var(--muted)] sm:text-base">
           E-mail: <span className="text-[var(--foreground)]">{session.email}</span>
         </p>
+        {session.profileComplete ? (
+          <div className="mt-4 rounded-xl border border-[var(--border)] bg-white/80 px-4 py-3 text-sm text-[var(--foreground)]">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Dados da conta
+            </p>
+            <p className="mt-1">
+              CPF:{" "}
+              <span className="font-medium">{formatCpfBr(dbCpf) ?? "—"}</span>
+            </p>
+            <p className="mt-0.5">
+              Telefone:{" "}
+              <span className="font-medium">{formatPhoneDigits(dbPhone) ?? "—"}</span>
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
+              Com login Google, nome e e-mail seguem a conta Google. A palavra-passe é gerida pelo
+              Google — volte a entrar com o botão Continuar com Google, ou com e-mail e senha se
+              criou palavra-passe no cadastro.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm leading-relaxed text-[var(--muted)]">
+              Entrou com Google? O <strong className="text-[var(--foreground)]">nome</strong> e o{" "}
+              <strong className="text-[var(--foreground)]">e-mail</strong> vêm da sua conta Google.
+              Complete <strong className="text-[var(--foreground)]">CPF</strong> e{" "}
+              <strong className="text-[var(--foreground)]">telefone</strong> abaixo para usar o
+              cashback.               Não armazenamos a palavra-passe Google — use de novo o botão Continuar com Google
+              para entrar.
+            </p>
+            <PainelProfileCompletionCard />
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl border border-[var(--border)] bg-slate-100 p-4 sm:p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
@@ -137,7 +196,7 @@ export default async function PainelPage() {
           {dbError && <p className="mt-2 text-sm text-[var(--error)]">{dbError}</p>}
         </div>
 
-        {!dbError && (
+        {!dbError && session.profileComplete && (
           <>
             <div className="mt-6">
               <ClientNotifications />

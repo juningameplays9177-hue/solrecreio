@@ -75,11 +75,7 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/login";
       return noStore(NextResponse.redirect(url));
     }
-    if (role === "CLIENT" && !profileComplete) {
-      return noStore(
-        NextResponse.redirect(new URL("/completar-cadastro", request.url))
-      );
-    }
+    /** Perfil incompleto: o próprio /painel mostra o formulário de CPF/telefone (ex.: após Google). */
   }
 
   return noStore(NextResponse.next());

@@ -25,7 +25,18 @@ function getApp(): FirebaseApp {
   const c = buildConfig();
   const existing = getApps()[0];
   if (existing) return existing;
-  return initializeApp(c);
+  try {
+    return initializeApp(c);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/duplicate-app|already exists/i.test(msg)) {
+      const again = getApps()[0];
+      if (again) return again;
+    }
+    throw new Error(
+      "Não foi possível inicializar o Firebase no navegador. Atualize a página ou tente mais tarde."
+    );
+  }
 }
 
 function firebaseAuthErrorMessage(err: unknown): string {
@@ -64,6 +75,11 @@ function firebaseAuthErrorMessage(err: unknown): string {
  * Após o utilizador voltar, `consumeGoogleRedirectIdToken()` obtém o token.
  */
 export async function startGoogleSignInRedirect(): Promise<void> {
+  if (!isFirebaseClientConfigured()) {
+    throw new Error(
+      "Firebase não está configurado para este site. Confira as variáveis NEXT_PUBLIC_FIREBASE_* no build."
+    );
+  }
   try {
     const auth = getAuth(getApp());
     const provider = new GoogleAuthProvider();
@@ -76,12 +92,17 @@ export async function startGoogleSignInRedirect(): Promise<void> {
 
 /** Chame após o retorno do redirect; devolve null se não houver resultado pendente. */
 export async function consumeGoogleRedirectIdToken(): Promise<string | null> {
-  const auth = getAuth(getApp());
+  if (!isFirebaseClientConfigured()) {
+    return null;
+  }
   try {
+    const auth = getAuth(getApp());
     const result = await getRedirectResult(auth);
     if (!result?.user) return null;
-    return result.user.getIdToken();
+    return await result.user.getIdToken();
   } catch (e) {
-    throw new Error(firebaseAuthErrorMessage(e));
+    // Não rebentar a app inteira (ex.: domínio não autorizado, sessão inválida, IndexedDB).
+    console.warn("[firebase] getRedirectResult:", e);
+    return null;
   }
 }

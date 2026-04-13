@@ -29,7 +29,6 @@ export function GoogleRedirectResultHandler() {
           return;
         }
         if (out.role === "ADMIN") router.push("/admin");
-        else if (out.profileComplete === false) router.push("/completar-cadastro");
         else router.push("/painel");
         router.refresh();
       } catch (e) {

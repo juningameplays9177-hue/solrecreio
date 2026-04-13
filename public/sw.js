@@ -3,7 +3,7 @@
  * Interceptar /_next/static mistura builds e causa 404 após cada deploy
  * (HTML ou cache pede chunk antigo que já não existe no servidor).
  */
-const CACHE_VERSION = "sol-do-recreio-v5-auth-routes";
+const CACHE_VERSION = "sol-do-recreio-v6-error-recovery";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [

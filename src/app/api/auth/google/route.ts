@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+﻿import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getPool } from "@/lib/db";
@@ -70,12 +70,28 @@ export async function POST(request: Request) {
     );
 
     let user: SessionUser | undefined = rows[0];
+    const googleDisplayName =
+      typeof decoded.name === "string" && decoded.name.trim()
+        ? decoded.name.trim().slice(0, 255)
+        : null;
+
+    if (user) {
+      if (
+        googleDisplayName &&
+        user.role === "CLIENT" &&
+        googleDisplayName !== user.name
+      ) {
+        await pool.query("UPDATE users SET name = ? WHERE id = ? AND role = 'CLIENT'", [
+          googleDisplayName,
+          user.id,
+        ]);
+        user = { ...user, name: googleDisplayName };
+      }
+    }
+
     if (!user) {
-      const rawName =
-        typeof decoded.name === "string" && decoded.name.trim()
-          ? decoded.name.trim()
-          : email.split("@")[0] || "Cliente";
-      const displayName = rawName.slice(0, 255);
+      const displayName =
+        googleDisplayName ?? (email.split("@")[0] || "Cliente").slice(0, 255);
       const passwordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 10);
       const [ins] = await pool.query<ResultSetHeader>(
         `INSERT INTO users (email, password_hash, name, cpf, phone, role)
