@@ -30,7 +30,7 @@ export default async function Home() {
             Bem-vindo
           </h2>
           <p className="mt-5 text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-            Entre com sua conta, com Google ou cadastre-se como cliente.
+            Entre com e-mail e senha ou crie sua conta de cliente em poucos passos.
           </p>
           <WelcomeAuthCard />
         </div>

@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/completar-cadastro") {
     if (!token || !role) {
-      return noStore(NextResponse.redirect(new URL("/entrar", request.url)));
+      return noStore(NextResponse.redirect(new URL("/login", request.url)));
     }
     if (role === "ADMIN") {
       return noStore(NextResponse.redirect(new URL("/admin", request.url)));
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
     }
     if (role !== "ADMIN") {
       const url = request.nextUrl.clone();
-      url.pathname = "/entrar";
+      url.pathname = "/login";
       url.searchParams.set("motivo", "admin");
       return noStore(NextResponse.redirect(url));
     }
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/painel")) {
     if (role !== "CLIENT" && role !== "ADMIN") {
       const url = request.nextUrl.clone();
-      url.pathname = "/entrar";
+      url.pathname = "/login";
       return noStore(NextResponse.redirect(url));
     }
     if (role === "CLIENT" && !profileComplete) {

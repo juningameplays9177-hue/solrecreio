@@ -36,7 +36,7 @@ function statusBadge(status: string) {
 export default async function PainelPage() {
   const session = await getSessionFromCookies();
   if (!session) {
-    redirect("/entrar");
+    redirect("/login");
   }
 
   if (session.role === "ADMIN") {
@@ -76,7 +76,7 @@ export default async function PainelPage() {
   }
 
   if (session.role !== "CLIENT") {
-    redirect("/entrar");
+    redirect("/login");
   }
 
   const userId = Number(session.sub);

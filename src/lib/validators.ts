@@ -24,29 +24,36 @@ export function isValidCpf(cpfRaw: string): boolean {
   return d2 === parseInt(cpf[10]!, 10);
 }
 
-export const registerSchema = z.object({
-  name: z.string().min(2, "Nome muito curto").max(200),
-  cpf: z.string().refine((s) => digitsOnly(s).length === 11, "CPF incompleto"),
-  phone: z
+export const strongPasswordSchema = z
+  .string()
+  .min(8, "A senha deve ter pelo menos 8 caracteres")
+  .max(128, "Senha muito longa")
+  .regex(/[a-z]/, "Inclua pelo menos uma letra minúscula")
+  .regex(/[A-Z]/, "Inclua pelo menos uma letra maiúscula")
+  .regex(/[0-9]/, "Inclua pelo menos um número")
+  .regex(/[^A-Za-z0-9]/, "Inclua pelo menos um símbolo ou caractere especial");
+
+/** Cadastro público: nome, e-mail e senha forte (CPF/telefone em /completar-cadastro). */
+export const emailRegisterSchema = z.object({
+  name: z
     .string()
-    .refine((s) => {
-      const d = digitsOnly(s);
-      return d.length >= 10 && d.length <= 11;
-    }, "Telefone inválido"),
-  email: z.string().email("E-mail inválido"),
-  password: z.string().min(6, "Senha: mínimo 6 caracteres"),
+    .min(2, "Nome muito curto")
+    .max(200, "Nome muito longo")
+    .transform((s) => s.trim().replace(/\s+/g, " ")),
+  email: z
+    .string()
+    .email("E-mail inválido")
+    .max(255)
+    .transform((s) => s.toLowerCase().trim()),
+  password: strongPasswordSchema,
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail inválido"),
+  email: z.string().email("E-mail inválido").max(255),
   password: z.string().min(1, "Informe a senha"),
 });
 
-export const googleIdTokenSchema = z.object({
-  idToken: z.string().min(20, "Token inválido"),
-});
-
-/** Completar cadastro pós-Google: CPF e telefone (mesmas regras do cadastro completo). */
+/** Completar cadastro: CPF e telefone. */
 export const completeProfileSchema = z.object({
   cpf: z.string().refine((s) => digitsOnly(s).length === 11, "CPF incompleto"),
   phone: z

@@ -9,7 +9,7 @@ export default async function AdminLayout({
 }) {
   const session = await getSessionFromCookies();
   if (!session || session.role !== "ADMIN") {
-    redirect("/entrar?motivo=admin");
+    redirect("/login?motivo=admin");
   }
 
   return <AdminShell>{children}</AdminShell>;

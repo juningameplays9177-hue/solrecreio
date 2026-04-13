@@ -109,7 +109,7 @@ export default function CompletarCadastroPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-[var(--muted)]">
-          <Link href="/entrar" className="text-[var(--accent)] hover:underline">
+          <Link href="/login" className="text-[var(--accent)] hover:underline">
             Voltar ao login
           </Link>
         </p>

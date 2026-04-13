@@ -17,6 +17,10 @@ type UserRow = RowDataPacket & {
   phone: string | null;
 };
 
+function normalizeEmail(raw: string): string {
+  return raw.normalize("NFKC").toLowerCase().trim().slice(0, 255);
+}
+
 export async function POST(request: Request) {
   try {
     const envErrs = getServerEnvErrors();
@@ -24,7 +28,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: envErrs[0] }, { status: 503 });
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Formato inválido. Envie JSON com e-mail e senha." },
+        { status: 400 }
+      );
+    }
+
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
       const first =
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: first }, { status: 400 });
     }
 
-    const email = parsed.data.email.toLowerCase().trim();
+    const email = normalizeEmail(parsed.data.email);
     const pool = getPool();
 
     const [rows] = await pool.query<UserRow[]>(
@@ -44,17 +57,14 @@ export async function POST(request: Request) {
     const user = rows[0];
     if (!user) {
       return NextResponse.json(
-        { error: "E-mail ou senha incorretos" },
+        { error: "Não encontramos uma conta com este e-mail." },
         { status: 401 }
       );
     }
 
     const ok = await bcrypt.compare(parsed.data.password, user.password_hash);
     if (!ok) {
-      return NextResponse.json(
-        { error: "E-mail ou senha incorretos" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
     }
 
     const profileComplete = clientProfileComplete(user.role, user.cpf, user.phone);
@@ -65,7 +75,11 @@ export async function POST(request: Request) {
       role: user.role,
       profileComplete,
     });
-    const res = NextResponse.json({ ok: true, role: user.role, profileComplete });
+    const res = NextResponse.json({
+      ok: true,
+      role: user.role,
+      profileComplete,
+    });
     return applySessionCookie(res, token);
   } catch (e) {
     console.error(e);

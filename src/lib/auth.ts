@@ -12,11 +12,9 @@ export type SessionPayload = {
   email: string;
   name: string;
   role: UserRole;
-  /** Cliente com CPF e telefone preenchidos no banco. Administradores são sempre completos. */
   profileComplete: boolean;
 };
 
-/** Deriva se o perfil está completo a partir dos dados do MySQL. */
 export function clientProfileComplete(
   role: UserRole,
   cpf: string | null | undefined,
@@ -28,15 +26,17 @@ export function clientProfileComplete(
   return c.length === 11 && p.length >= 10;
 }
 
-function getSecretKey(): Uint8Array {
+function readAuthSecret(): Uint8Array | null {
   const secret = process.env.AUTH_SECRET;
-  if (!secret || secret.length < 16) {
-    throw new Error("Defina AUTH_SECRET com pelo menos 16 caracteres no .env");
-  }
+  if (!secret || secret.length < 16) return null;
   return new TextEncoder().encode(secret);
 }
 
 export async function signSession(payload: SessionPayload): Promise<string> {
+  const key = readAuthSecret();
+  if (!key) {
+    throw new Error("Defina AUTH_SECRET com pelo menos 16 caracteres no .env");
+  }
   return new SignJWT({
     email: payload.email,
     name: payload.name,
@@ -46,17 +46,13 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime("7d")
-    .sign(getSecretKey());
+    .setExpirationTime("14d")
+    .sign(key);
 }
 
 export async function verifySession(token: string): Promise<SessionPayload | null> {
-  let key: Uint8Array;
-  try {
-    key = getSecretKey();
-  } catch {
-    return null;
-  }
+  const key = readAuthSecret();
+  if (!key) return null;
   try {
     const { payload } = await jwtVerify(token, key);
     const sub = payload.sub;
@@ -64,8 +60,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
     const name = payload.name;
     const role = payload.role;
     const pc = payload.profileComplete;
-    const profileComplete =
-      typeof pc === "boolean" ? pc : true;
+    const profileComplete = typeof pc === "boolean" ? pc : true;
     if (
       typeof sub !== "string" ||
       typeof email !== "string" ||
@@ -86,7 +81,7 @@ export function sessionCookieOptions() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 14,
   };
 }
 
@@ -95,7 +90,6 @@ export type ClientSessionReady = SessionPayload & {
   profileComplete: true;
 };
 
-/** APIs exclusivas do painel do cliente: 401 se não for CLIENT; 403 se faltar CPF/telefone. */
 export function denyUnlessClientWithCompleteProfile(
   session: SessionPayload | null
 ): NextResponse | null {
@@ -111,7 +105,6 @@ export function denyUnlessClientWithCompleteProfile(
   return null;
 }
 
-/** Use após `denyUnlessClientWithCompleteProfile` retornar null. */
 export function asClientSessionReady(session: SessionPayload | null): ClientSessionReady {
   if (!session || session.role !== "CLIENT" || !session.profileComplete) {
     throw new Error("Sessão de cliente inválida (perfil incompleto).");
@@ -119,7 +112,6 @@ export function asClientSessionReady(session: SessionPayload | null): ClientSess
   return session as ClientSessionReady;
 }
 
-/** Em Route Handlers, prefira isto a `cookies().set` para o cookie ir na resposta JSON. */
 export function applySessionCookie(res: NextResponse, token: string): NextResponse {
   res.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
   return res;
