@@ -44,6 +44,65 @@ function sqlMessage(e: unknown): string | undefined {
   return undefined;
 }
 
+function extractNestedErrorMessage(e: unknown): string {
+  if (e instanceof Error) {
+    const parts = [e.message];
+    const c = e.cause;
+    if (c instanceof Error && c.message) parts.push(c.message);
+    return parts.join(" ");
+  }
+  if (e && typeof e === "object" && "message" in e) {
+    const m = (e as { message?: unknown }).message;
+    return typeof m === "string" ? m : "";
+  }
+  return "";
+}
+
+function firebaseAuthErrorCode(e: unknown): string | undefined {
+  const top = errCode(e);
+  if (top) return top;
+  if (e && typeof e === "object" && "errorInfo" in e) {
+    const ei = (e as { errorInfo?: { code?: unknown } }).errorInfo;
+    const c = ei?.code;
+    return typeof c === "string" ? c : undefined;
+  }
+  return undefined;
+}
+
+function googleAuthVerifyFriendlyMessage(e: unknown): string | undefined {
+  const code = firebaseAuthErrorCode(e);
+  if (code) {
+    const byCode: Record<string, string> = {
+      "auth/id-token-expired":
+        "O login do Google expirou. Clique de novo em Continuar com Google.",
+      "auth/invalid-id-token":
+        "Token inválido. Atualize a página e tente Continuar com Google de novo.",
+      "auth/argument-error":
+        "Sessão inválida. Atualize a página e tente Continuar com Google de novo.",
+    };
+    if (byCode[code]) return byCode[code]!;
+  }
+
+  const msg = extractNestedErrorMessage(e);
+  if (!msg) return undefined;
+
+  if (/expired|JWTExpired|jwt expired/i.test(msg)) {
+    return "O login do Google expirou. Tente Continuar com Google de novo.";
+  }
+  if (
+    /audience|issuer|signature|JWTClaim|JWSSignature|claim|nbf|iat/i.test(msg)
+  ) {
+    return "O projeto Firebase do servidor não bate com o da app (token). Confira as credenciais do mesmo projeto no .env ou comente GOOGLE_APPLICATION_CREDENTIALS para validar só com JWKS.";
+  }
+  if (/ECONNRESET|fetch failed|getaddrinfo|ENOTFOUND|network|Failed to fetch/i.test(msg)) {
+    return "Falha de rede ao validar o login com Google. Verifique a internet ou firewall.";
+  }
+  if (/Decoding Firebase ID token|verifyIdToken|invalid token/i.test(msg)) {
+    return "Não foi possível validar o token do Google. Tente entrar de novo.";
+  }
+  return undefined;
+}
+
 /** Mensagem amigável para erros comuns do mysql2 */
 export function mysqlFriendlyMessage(e: unknown): string | undefined {
   const code = errCode(e);
@@ -73,6 +132,8 @@ export function mysqlFriendlyMessage(e: unknown): string | undefined {
 export function apiErrorMessage(e: unknown, fallback: string): string {
   const mysqlMsg = mysqlFriendlyMessage(e);
   if (mysqlMsg) return mysqlMsg;
+  const googleMsg = googleAuthVerifyFriendlyMessage(e);
+  if (googleMsg) return googleMsg;
   const sql = sqlMessage(e);
   if (sql && sql.length < 500) {
     return sql;
@@ -95,7 +156,7 @@ export function getFirebaseAuthServerEnvErrors(): string[] {
 
   if (jsonPath && !fs.existsSync(resolveCredentialPath(jsonPath))) {
     errors.push(
-      `Ficheiro Admin não encontrado: ${resolveCredentialPath(jsonPath)}.`
+      `Ficheiro Admin não encontrado: ${resolveCredentialPath(jsonPath)}. Remova FIREBASE_SERVICE_ACCOUNT_PATH do .env para usar só JWKS, ou coloque o ficheiro correto.`
     );
   }
   if (googleCreds && !fs.existsSync(resolveCredentialPath(googleCreds))) {
@@ -107,7 +168,9 @@ export function getFirebaseAuthServerEnvErrors(): string[] {
     try {
       JSON.parse(jsonInline);
     } catch {
-      errors.push("FIREBASE_SERVICE_ACCOUNT_JSON não é JSON válido.");
+      errors.push(
+        "FIREBASE_SERVICE_ACCOUNT_JSON não é JSON válido. Gere com: npm run firebase:service-account-line -- \"caminho\\\\chave.json\""
+      );
     }
   }
 

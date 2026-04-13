@@ -53,6 +53,10 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Informe a senha"),
 });
 
+export const googleIdTokenSchema = z.object({
+  idToken: z.string().min(20, "Token inválido"),
+});
+
 /** Completar cadastro: CPF e telefone. */
 export const completeProfileSchema = z.object({
   cpf: z.string().refine((s) => digitsOnly(s).length === 11, "CPF incompleto"),

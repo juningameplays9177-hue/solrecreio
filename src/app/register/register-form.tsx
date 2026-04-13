@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { AuthAccessShell } from "@/components/auth/auth-access-shell";
+import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
+import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
 import { emailRegisterSchema, strongPasswordSchema } from "@/lib/validators";
 
 const inputClass =
@@ -11,6 +13,9 @@ const inputClass =
 
 const labelClass =
   "mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-400";
+
+const googleBtnDark =
+  "border-white/20 bg-white text-slate-900 shadow-md hover:bg-slate-100 hover:shadow-lg";
 
 function passwordHints(password: string): { ok: boolean; label: string }[] {
   return [
@@ -24,6 +29,8 @@ function passwordHints(password: string): { ok: boolean; label: string }[] {
 
 export function RegisterForm() {
   const router = useRouter();
+  const { runGoogleLogin, googleLoading, googleError, setGoogleError } =
+    useGoogleAuthRedirect();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -84,7 +91,7 @@ export function RegisterForm() {
   return (
     <AuthAccessShell
       title="Crie sua conta"
-      subtitle="Cadastro rápido para o programa de cashback. Depois pedimos CPF e telefone para concluir."
+      subtitle="Use o Google ou cadastre-se com e-mail e senha. Depois pedimos CPF e telefone para concluir."
       footer={
         <p>
           Já tem conta?{" "}
@@ -97,6 +104,29 @@ export function RegisterForm() {
         </p>
       }
     >
+      <HomeGoogleAuthSection
+        googleLoading={googleLoading}
+        googleError={googleError}
+        runGoogleLogin={runGoogleLogin}
+        disabled={loading}
+        buttonClassName={googleBtnDark}
+        errorClassName="text-red-300"
+        onBeforeGoogle={() => {
+          setError(null);
+          setSuccess(null);
+          setGoogleError(null);
+        }}
+      />
+
+      <div className="relative my-6" aria-hidden>
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/15" />
+        </div>
+        <div className="relative flex justify-center text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+          <span className="bg-white/[0.04] px-3 backdrop-blur-sm">ou com e-mail</span>
+        </div>
+      </div>
+
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
           <label htmlFor="reg-name" className={labelClass}>

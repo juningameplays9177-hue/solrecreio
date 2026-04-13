@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { GoogleRedirectResultHandler } from "@/components/google-redirect-result-handler";
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
@@ -47,6 +48,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className} ${inter.variable}`}>
         <PwaRegister />
+        <GoogleRedirectResultHandler />
         {children}
       </body>
     </html>
