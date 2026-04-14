@@ -78,7 +78,8 @@ export function mysqlAuthRouteCatchStatus(e: unknown): number {
   const code = errCode(e);
   const errno = errNo(e);
   if (code === "ER_DUP_ENTRY" || errno === 1062) return 409;
-  if (mysqlFriendlyMessage(e)) return 503;
+  /** 502 distingue falha MySQL de 503 genérico de proxies/CDN (“temporarily busy”). */
+  if (mysqlFriendlyMessage(e)) return 502;
   return 500;
 }
 

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   try {
     const envErrs = [...getServerEnvErrors(), ...getFirebaseAuthServerEnvErrors()];
     if (envErrs.length > 0) {
-      return NextResponse.json({ error: envErrs[0] }, { status: 503, ...jsonNoStore });
+      return NextResponse.json({ error: envErrs[0] }, { status: 500, ...jsonNoStore });
     }
 
     const body = await request.json();

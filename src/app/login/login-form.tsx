@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { AuthAccessShell } from "@/components/auth/auth-access-shell";
 import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
+import { readAuthApiJson } from "@/lib/read-auth-api-response";
 import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
 
 const inputClass =
@@ -39,17 +40,16 @@ export function LoginForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-        const data = (await res.json().catch(() => ({}))) as {
+        const parsed = await readAuthApiJson<{
           error?: string;
           profileComplete?: boolean;
           role?: string;
-        };
-        if (!res.ok) {
-          setError(
-            typeof data.error === "string" ? data.error : "Não foi possível entrar."
-          );
+        }>(res, "Não foi possível entrar.");
+        if (!parsed.ok) {
+          setError(parsed.message);
           return;
         }
+        const data = parsed.data;
         if (data.role === "ADMIN") {
           router.push("/admin");
         } else if (data.profileComplete === false) {
@@ -57,7 +57,6 @@ export function LoginForm() {
         } else {
           router.push("/painel");
         }
-        router.refresh();
       } finally {
         setLoading(false);
       }

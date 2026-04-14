@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AuthAccessShell } from "@/components/auth/auth-access-shell";
 import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
 import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
+import { readAuthApiJson } from "@/lib/read-auth-api-response";
 import { registrationFormSchema, strongPasswordSchema } from "@/lib/validators";
 
 const inputClass =
@@ -118,23 +119,21 @@ export function RegisterForm() {
             phone,
           }),
         });
-        const data = (await res.json().catch(() => ({}))) as {
+        const parsed = await readAuthApiJson<{
           error?: string;
           profileComplete?: boolean;
-        };
-        if (!res.ok) {
-          setError(
-            typeof data.error === "string" ? data.error : "Não foi possível cadastrar."
-          );
+        }>(res, "Não foi possível cadastrar.");
+        if (!parsed.ok) {
+          setError(parsed.message);
           return;
         }
+        const data = parsed.data;
         setSuccess("Conta criada. Redirecionando…");
         if (data.profileComplete === false) {
           router.push("/completar-cadastro");
         } else {
           router.push("/loja");
         }
-        router.refresh();
       } finally {
         setLoading(false);
       }
