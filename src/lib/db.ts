@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import type { PoolOptions } from "mysql2";
+import { getNormalizedDatabaseUrl } from "@/lib/server-env";
 
 function parseMysqlUrl(connectionString: string): PoolOptions {
   const u = new URL(connectionString);
@@ -18,7 +19,7 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
 }
 
 function getPoolConfig(): PoolOptions {
-  const url = process.env.DATABASE_URL;
+  const url = getNormalizedDatabaseUrl();
   if (!url) {
     throw new Error("Defina DATABASE_URL no arquivo .env");
   }

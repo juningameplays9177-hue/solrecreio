@@ -27,7 +27,7 @@ export function clientProfileComplete(
 }
 
 function readAuthSecret(): Uint8Array | null {
-  const secret = process.env.AUTH_SECRET;
+  const secret = process.env.AUTH_SECRET?.trim();
   if (!secret || secret.length < 16) return null;
   return new TextEncoder().encode(secret);
 }

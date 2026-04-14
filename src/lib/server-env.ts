@@ -5,14 +5,63 @@ function resolveCredentialPath(filePath: string): string {
   return path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 }
 
+/** Valor de DATABASE_URL sem espaços e sem aspas extras (comuns no painel da Hostinger). */
+export function getNormalizedDatabaseUrl(): string | undefined {
+  const raw = process.env.DATABASE_URL;
+  if (typeof raw !== "string") return undefined;
+  let s = raw.trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s.length > 0 ? s : undefined;
+}
+
+/** Erros de configuração da DATABASE_URL antes de abrir o pool MySQL. */
+export function collectDatabaseUrlEnvErrors(): string[] {
+  const dbUrl = getNormalizedDatabaseUrl();
+  if (!dbUrl) {
+    return [
+      "Configure DATABASE_URL (variáveis de ambiente no painel da hospedagem ou .env local). Reinicie o Node após salvar. Veja .env.example.",
+    ];
+  }
+  try {
+    const parsed = new URL(dbUrl);
+    if (!parsed.hostname) {
+      return ["DATABASE_URL sem hostname. Confira mysql://utilizador:senha@host:3306/banco."];
+    }
+  } catch {
+    return [
+      "DATABASE_URL tem formato inválido. Remova aspas envolvendo o URL no painel e confira mysql://utilizador:senha@host:3306/banco.",
+    ];
+  }
+  if (/^mysql:\/\//i.test(dbUrl)) {
+    const rest = dbUrl.slice("mysql://".length);
+    if (rest.includes("@") && rest.split("@").length > 2) {
+      return [
+        'DATABASE_URL: a palavra-passe não pode conter "@" sem codificar. Substitua @ por %40 na senha (ex.: Blade1411%4020).',
+      ];
+    }
+  }
+  return [];
+}
+
+/** HTTP status para falhas MySQL em rotas de auth (evita 500 genérico quando o serviço é configuração/rede). */
+export function mysqlAuthRouteCatchStatus(e: unknown): number {
+  const code = errCode(e);
+  const errno = errNo(e);
+  if (code === "ER_DUP_ENTRY" || errno === 1062) return 409;
+  if (mysqlFriendlyMessage(e)) return 503;
+  return 500;
+}
+
 export function getServerEnvErrors(): string[] {
   const errors: string[] = [];
-  if (!process.env.DATABASE_URL?.trim()) {
-    errors.push(
-      "Configure DATABASE_URL no arquivo .env na raiz do projeto (veja .env.example). Reinicie o servidor após salvar. Em deploy (ex.: Vercel), defina DATABASE_URL nas variáveis de ambiente."
-    );
-  }
-  if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET.length < 16) {
+  errors.push(...collectDatabaseUrlEnvErrors());
+  const auth = process.env.AUTH_SECRET?.trim();
+  if (!auth || auth.length < 16) {
     errors.push(
       "Configure AUTH_SECRET no .env com pelo menos 16 caracteres."
     );

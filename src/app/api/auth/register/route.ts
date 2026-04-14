@@ -3,7 +3,11 @@ import bcrypt from "bcryptjs";
 import { getPool } from "@/lib/db";
 import { applySessionCookie, clientProfileComplete, signSession } from "@/lib/auth";
 import { registrationFormSchema } from "@/lib/validators";
-import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
+import {
+  apiErrorMessage,
+  getServerEnvErrors,
+  mysqlAuthRouteCatchStatus,
+} from "@/lib/server-env";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 function sanitizeDisplayName(name: string): string {
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO users (email, password_hash, name, cpf, phone, role)
@@ -101,11 +105,12 @@ export async function POST(request: Request) {
     return applySessionCookie(res, token);
   } catch (e) {
     console.error(e);
+    const status = mysqlAuthRouteCatchStatus(e);
     return NextResponse.json(
       {
         error: apiErrorMessage(e, "Erro ao cadastrar. Tente novamente."),
       },
-      { status: 500 }
+      { status }
     );
   }
 }

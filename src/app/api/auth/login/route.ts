@@ -3,7 +3,11 @@ import bcrypt from "bcryptjs";
 import { getPool } from "@/lib/db";
 import { applySessionCookie, clientProfileComplete, signSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
-import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
+import {
+  apiErrorMessage,
+  getServerEnvErrors,
+  mysqlAuthRouteCatchStatus,
+} from "@/lib/server-env";
 import type { RowDataPacket } from "mysql2";
 import type { UserRole } from "@/lib/auth";
 
@@ -83,11 +87,12 @@ export async function POST(request: Request) {
     return applySessionCookie(res, token);
   } catch (e) {
     console.error(e);
+    const status = mysqlAuthRouteCatchStatus(e);
     return NextResponse.json(
       {
         error: apiErrorMessage(e, "Erro ao entrar. Tente novamente."),
       },
-      { status: 500 }
+      { status }
     );
   }
 }
