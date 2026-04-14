@@ -15,8 +15,6 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
   const pathDb = u.pathname.replace(/^\//, "").split("/")[0] ?? "";
   const database = safeDecodeURIComponent(pathDb).trim();
   const host = (u.hostname || "localhost").toLowerCase();
-  const isLocal =
-    host === "localhost" || host === "127.0.0.1" || host === "::1";
 
   const user = safeDecodeURIComponent(u.username).trim();
   const password = u.password ? safeDecodeURIComponent(u.password) : "";
@@ -30,12 +28,26 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
     waitForConnections: true,
     connectionLimit: 5,
     queueLimit: 0,
-    connectTimeout: 20_000,
+    /** Antes do proxy da hospedagem devolver 503 por timeout, falhamos com erro JSON legível. */
+    connectTimeout: 12_000,
     enableKeepAlive: true,
   };
 
-  /** MySQL remoto (ex.: Hostinger com TLS) — sem isto às vezes falha ou devolve acesso negado enganoso. */
-  if (!isLocal) {
+  /**
+   * TLS só quando pedido — forçar SSL em todos os hosts remotos pode travar o handshake
+   * em servidores sem TLS e o proxy responde “503 temporarily busy”.
+   * Use `DATABASE_SSL=1` ou `?ssl=true` no fim do DATABASE_URL.
+   */
+  const sslParam = u.searchParams.get("ssl")?.toLowerCase();
+  const envSsl = (process.env.DATABASE_SSL ?? "").trim().toLowerCase();
+  const useSsl =
+    sslParam === "1" ||
+    sslParam === "true" ||
+    sslParam === "yes" ||
+    envSsl === "1" ||
+    envSsl === "true" ||
+    envSsl === "yes";
+  if (useSsl) {
     base.ssl = { rejectUnauthorized: false };
   }
 
