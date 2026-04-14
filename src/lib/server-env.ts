@@ -5,6 +5,38 @@ function resolveCredentialPath(filePath: string): string {
   return path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 }
 
+/**
+ * mysql://user:password@host — o separador real é o **último** @ antes do host.
+ * Se a senha contiver @, o URL cru fica com vários @; aqui recompomos e codificamos
+ * utilizador e senha (ex.: @ na senha → %40).
+ */
+function repairMysqlDatabaseUrlAmbiguousAt(dbUrl: string): string {
+  if (!/^mysql:\/\//i.test(dbUrl)) return dbUrl;
+  const rest = dbUrl.slice("mysql://".length);
+  if (!rest.includes("@") || rest.split("@").length <= 2) return dbUrl;
+
+  const sep = rest.lastIndexOf("@");
+  if (sep <= 0) return dbUrl;
+  const creds = rest.slice(0, sep);
+  const hostDb = rest.slice(sep + 1);
+  const colon = creds.indexOf(":");
+  if (colon === -1) return dbUrl;
+  const userRaw = creds.slice(0, colon);
+  const passRaw = creds.slice(colon + 1);
+  if (!userRaw) return dbUrl;
+
+  const decodeSafely = (v: string) => {
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  };
+  const user = decodeSafely(userRaw);
+  const password = decodeSafely(passRaw);
+  return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${hostDb}`;
+}
+
 /** Valor de DATABASE_URL sem espaços e sem aspas extras (comuns no painel da Hostinger). */
 export function getNormalizedDatabaseUrl(): string | undefined {
   const raw = process.env.DATABASE_URL;
@@ -16,7 +48,8 @@ export function getNormalizedDatabaseUrl(): string | undefined {
   ) {
     s = s.slice(1, -1).trim();
   }
-  return s.length > 0 ? s : undefined;
+  if (!s.length) return undefined;
+  return repairMysqlDatabaseUrlAmbiguousAt(s);
 }
 
 /** Erros de configuração da DATABASE_URL antes de abrir o pool MySQL. */
@@ -36,14 +69,6 @@ export function collectDatabaseUrlEnvErrors(): string[] {
     return [
       "DATABASE_URL tem formato inválido. Remova aspas envolvendo o URL no painel e confira mysql://utilizador:senha@host:3306/banco.",
     ];
-  }
-  if (/^mysql:\/\//i.test(dbUrl)) {
-    const rest = dbUrl.slice("mysql://".length);
-    if (rest.includes("@") && rest.split("@").length > 2) {
-      return [
-        'DATABASE_URL: a palavra-passe não pode conter "@" sem codificar. Substitua @ por %40 na senha (ex.: Blade1411%4020).',
-      ];
-    }
   }
   return [];
 }
