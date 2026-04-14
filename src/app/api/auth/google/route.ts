@@ -95,7 +95,6 @@ export async function POST(request: Request) {
           ok: true,
           needsRegistration: true,
           email,
-          name: displayName,
         },
         jsonNoStore
       );

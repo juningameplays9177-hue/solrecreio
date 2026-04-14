@@ -64,10 +64,9 @@ export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledEmail = searchParams.get("email") ?? "";
-  const prefilledName = searchParams.get("name") ?? "";
   const { runGoogleLogin, googleLoading, googleError, setGoogleError } =
     useGoogleAuthRedirect();
-  const [name, setName] = useState(prefilledName);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState(prefilledEmail);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");

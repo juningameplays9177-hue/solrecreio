@@ -31,7 +31,6 @@ export function GoogleRedirectResultHandler() {
         if (out.needsRegistration) {
           const params = new URLSearchParams();
           if (out.email) params.set("email", out.email);
-          if (out.name) params.set("name", out.name);
           const qs = params.toString();
           router.push(qs ? `/register?${qs}` : "/register");
         } else if (out.role === "ADMIN") {
