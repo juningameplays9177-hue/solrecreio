@@ -1,5 +1,6 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
+import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
 
 const usersSql = `
 CREATE TABLE IF NOT EXISTS users (
@@ -77,9 +78,11 @@ CREATE TABLE IF NOT EXISTS cashback_redemptions (
 `;
 
 async function main() {
-  const url = process.env.DATABASE_URL;
+  const url = resolveDatabaseUrlFromEnv();
   if (!url) {
-    console.error("Defina DATABASE_URL no .env");
+    console.error(
+      "Defina DATABASE_URL ou MYSQL_HOST + MYSQL_USER + MYSQL_DATABASE no .env"
+    );
     process.exit(1);
   }
 

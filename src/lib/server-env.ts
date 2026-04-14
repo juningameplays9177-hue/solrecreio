@@ -5,6 +5,58 @@ function resolveCredentialPath(filePath: string): string {
   return path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 }
 
+function safeDecodeURIComponent(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/** Remove BOM, aspas envolventes e espaços (comum ao colar do painel da Hostinger). */
+function stripEnvValue(raw: string | undefined): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  let s = raw.replace(/^\uFEFF/, "").trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s.length ? s : undefined;
+}
+
+function mysqlSplitEnvTouched(): boolean {
+  return (
+    process.env.MYSQL_HOST !== undefined ||
+    process.env.MYSQL_USER !== undefined ||
+    process.env.MYSQL_DATABASE !== undefined ||
+    process.env.MYSQL_PASSWORD !== undefined ||
+    process.env.MYSQL_PORT !== undefined
+  );
+}
+
+/**
+ * Ligação sem URL: senha com # : ? & etc. não precisa de codificação manual.
+ * Tem prioridade sobre DATABASE_URL quando MYSQL_HOST, MYSQL_USER e MYSQL_DATABASE estão definidos.
+ */
+function buildMysqlUrlFromSplitEnv(): string | undefined {
+  const host = stripEnvValue(process.env.MYSQL_HOST);
+  const user = stripEnvValue(process.env.MYSQL_USER);
+  const database = stripEnvValue(process.env.MYSQL_DATABASE);
+  if (!host || !user || !database) return undefined;
+
+  const portRaw = stripEnvValue(process.env.MYSQL_PORT);
+  const port =
+    portRaw && /^\d+$/.test(portRaw) ? portRaw : "3306";
+  const password =
+    process.env.MYSQL_PASSWORD !== undefined
+      ? stripEnvValue(process.env.MYSQL_PASSWORD) ?? ""
+      : "";
+
+  return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
+}
+
 /**
  * mysql://user:password@host — o separador real é o **último** @ antes do host.
  * Se a senha contiver @, o URL cru fica com vários @; aqui recompomos e codificamos
@@ -25,23 +77,35 @@ function repairMysqlDatabaseUrlAmbiguousAt(dbUrl: string): string {
   const passRaw = creds.slice(colon + 1);
   if (!userRaw) return dbUrl;
 
-  const decodeSafely = (v: string) => {
-    try {
-      return decodeURIComponent(v);
-    } catch {
-      return v;
-    }
-  };
-  const user = decodeSafely(userRaw);
-  const password = decodeSafely(passRaw);
+  const user = safeDecodeURIComponent(userRaw);
+  const password = safeDecodeURIComponent(passRaw);
   return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${hostDb}`;
 }
 
-/** Valor de DATABASE_URL sem espaços e sem aspas extras (comuns no painel da Hostinger). */
+/**
+ * Volta a codificar utilizador/senha a partir do URL já interpretado.
+ * Evita senha truncada por `#` não escapado e alinha o que o mysql2 envia ao servidor.
+ */
+function reencodeMysqlUserInfoFromUrl(dbUrl: string): string {
+  try {
+    const u = new URL(dbUrl);
+    if (!/^mysql:$/i.test(u.protocol)) return dbUrl;
+    const user = safeDecodeURIComponent(u.username).trim();
+    const pass = u.password ? safeDecodeURIComponent(u.password) : "";
+    return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${u.host}${u.pathname}${u.search}`;
+  } catch {
+    return dbUrl;
+  }
+}
+
+/** Valor de ligação MySQL: MYSQL_* (prioridade) ou DATABASE_URL normalizada. */
 export function getNormalizedDatabaseUrl(): string | undefined {
+  const fromSplit = buildMysqlUrlFromSplitEnv();
+  if (fromSplit) return fromSplit;
+
   const raw = process.env.DATABASE_URL;
   if (typeof raw !== "string") return undefined;
-  let s = raw.trim();
+  let s = raw.replace(/^\uFEFF/, "").trim();
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
     (s.startsWith("'") && s.endsWith("'"))
@@ -49,25 +113,38 @@ export function getNormalizedDatabaseUrl(): string | undefined {
     s = s.slice(1, -1).trim();
   }
   if (!s.length) return undefined;
-  return repairMysqlDatabaseUrlAmbiguousAt(s);
+  return reencodeMysqlUserInfoFromUrl(repairMysqlDatabaseUrlAmbiguousAt(s));
 }
 
 /** Erros de configuração da DATABASE_URL antes de abrir o pool MySQL. */
 export function collectDatabaseUrlEnvErrors(): string[] {
+  if (mysqlSplitEnvTouched()) {
+    const host = stripEnvValue(process.env.MYSQL_HOST);
+    const user = stripEnvValue(process.env.MYSQL_USER);
+    const database = stripEnvValue(process.env.MYSQL_DATABASE);
+    if (!host || !user || !database) {
+      return [
+        "Com variáveis MYSQL_*: defina MYSQL_HOST, MYSQL_USER e MYSQL_DATABASE (todos). Opcional: MYSQL_PASSWORD, MYSQL_PORT. Ou remova MYSQL_* e use só DATABASE_URL. Veja .env.example.",
+      ];
+    }
+  }
+
   const dbUrl = getNormalizedDatabaseUrl();
   if (!dbUrl) {
     return [
-      "Configure DATABASE_URL (variáveis de ambiente no painel da hospedagem ou .env local). Reinicie o Node após salvar. Veja .env.example.",
+      "Configure DATABASE_URL ou MYSQL_HOST + MYSQL_USER + MYSQL_DATABASE no .env / painel da hospedagem. Reinicie o Node após salvar. Veja .env.example.",
     ];
   }
   try {
     const parsed = new URL(dbUrl);
     if (!parsed.hostname) {
-      return ["DATABASE_URL sem hostname. Confira mysql://utilizador:senha@host:3306/banco."];
+      return [
+        "Ligação MySQL sem hostname. Ex.: mysql://utilizador:senha@localhost:3306/banco ou variáveis MYSQL_*.",
+      ];
     }
   } catch {
     return [
-      "DATABASE_URL tem formato inválido. Remova aspas envolvendo o URL no painel e confira mysql://utilizador:senha@host:3306/banco.",
+      "DATABASE_URL tem formato inválido. Remova aspas envolvendo o URL ou use MYSQL_HOST/MYSQL_USER/MYSQL_DATABASE/MYSQL_PASSWORD. Veja .env.example.",
     ];
   }
   return [];
@@ -184,10 +261,13 @@ export function mysqlFriendlyMessage(e: unknown): string | undefined {
   const errno = errNo(e);
 
   if (code === "ECONNREFUSED" || errno === -111) {
-    return "Não foi possível conectar ao MySQL. Ligue o MySQL (serviço no Windows) e confira DATABASE_URL no .env.";
+    return "Não foi possível conectar ao MySQL. Ligue o MySQL (serviço no Windows) e confira DATABASE_URL ou MYSQL_* no .env.";
   }
-  if (code === "ER_ACCESS_DENIED_ERROR" || code === "ER_NOT_SUPPORTED_AUTH_MODE") {
-    return "Acesso negado ao MySQL. Confira usuário e senha em DATABASE_URL no .env.";
+  if (code === "ER_ACCESS_DENIED_ERROR") {
+    return "Acesso negado ao MySQL. Confira utilizador e senha no painel (hPanel → Bases de dados) e no .env: use MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE e MYSQL_PASSWORD (senha em texto, sem codificar URL) ou corrija DATABASE_URL (# : ? & @ na senha têm de estar codificados na URL).";
+  }
+  if (code === "ER_NOT_SUPPORTED_AUTH_MODE") {
+    return "Modo de autenticação MySQL não suportado por este cliente. No hPanel, use utilizador MySQL nativo do plano ou altere o plugin de autenticação da conta.";
   }
   if (code === "ER_BAD_DB_ERROR") {
     return "Banco de dados inexistente. Rode no terminal: npm.cmd run db:init";

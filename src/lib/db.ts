@@ -64,7 +64,7 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
 function getPoolConfig(): PoolOptions {
   const url = getNormalizedDatabaseUrl();
   if (!url) {
-    throw new Error("Defina DATABASE_URL no arquivo .env");
+    throw new Error("Defina DATABASE_URL ou MYSQL_HOST/MYSQL_USER/MYSQL_DATABASE no .env");
   }
   return parseMysqlUrl(url);
 }

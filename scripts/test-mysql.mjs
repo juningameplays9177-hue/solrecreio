@@ -1,9 +1,10 @@
 /**
- * Testa DATABASE_URL do .env (mesma pasta do projeto).
+ * Testa ligação MySQL (.env): DATABASE_URL ou MYSQL_HOST+MYSQL_USER+MYSQL_DATABASE(+MYSQL_PASSWORD).
  * Uso: npm.cmd run db:ping
  */
 import "dotenv/config";
 import mysql from "mysql2/promise";
+import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
 
 function parseMysqlUrl(connectionString) {
   const u = new URL(connectionString);
@@ -19,13 +20,15 @@ function parseMysqlUrl(connectionString) {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL?.trim();
+  const url = resolveDatabaseUrlFromEnv();
   if (!url) {
-    console.error("ERRO: DATABASE_URL não está definido no .env");
+    console.error(
+      "ERRO: defina DATABASE_URL ou MYSQL_HOST + MYSQL_USER + MYSQL_DATABASE no .env"
+    );
     process.exit(1);
   }
 
-  console.log("Tentando conectar usando DATABASE_URL...");
+  console.log("Tentando conectar ao MySQL...");
   let cfg;
   try {
     cfg = parseMysqlUrl(url);
@@ -56,9 +59,9 @@ Dicas no Windows:
   1) Serviços (services.msc): procure "MySQL" ou "MySQL80" e INICIE o serviço.
   2) PowerShell (como Administrador): net start MySQL80   (o nome pode variar)
   3) Se usa XAMPP/WAMP: inicie o MySQL pelo painel e confira a porta (às vezes 3306).
-  4) Ajuste DATABASE_URL no .env, exemplo:
-     mysql://root:SUA_SENHA@127.0.0.1:3306/sol_do_recreio
-  5) Senha vazia: mysql://root:@127.0.0.1:3306/sol_do_recreio
+  4) Ajuste DATABASE_URL ou use MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE, MYSQL_PASSWORD
+  5) Exemplo URL: mysql://root:SUA_SENHA@127.0.0.1:3306/sol_do_recreio
+  6) Senha vazia: mysql://root:@127.0.0.1:3306/sol_do_recreio
 `);
     process.exit(1);
   }

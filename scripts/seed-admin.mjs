@@ -1,6 +1,7 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
+import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
 
 function parseMysqlUrl(connectionString) {
   const u = new URL(connectionString);
@@ -16,13 +17,15 @@ function parseMysqlUrl(connectionString) {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL;
+  const url = resolveDatabaseUrlFromEnv();
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
   const name = process.env.ADMIN_NAME ?? "Administrador";
 
   if (!url || !email || !password) {
-    console.error("Defina DATABASE_URL, ADMIN_EMAIL e ADMIN_PASSWORD no .env");
+    console.error(
+      "Defina DATABASE_URL (ou MYSQL_*), ADMIN_EMAIL e ADMIN_PASSWORD no .env"
+    );
     process.exit(1);
   }
 
