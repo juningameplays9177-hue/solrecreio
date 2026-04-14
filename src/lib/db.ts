@@ -2,6 +2,12 @@ import mysql from "mysql2/promise";
 import type { PoolOptions } from "mysql2";
 import { getNormalizedDatabaseUrl } from "@/lib/server-env";
 
+/**
+ * Limite por consulta (mysql2 `timeout` em QueryOptions) para não ficar pendurado
+ * até o nginx devolver 504 Gateway Time-out.
+ */
+export const MYSQL_QUERY_TIMEOUT_MS = 14_000;
+
 function safeDecodeURIComponent(segment: string): string {
   try {
     return decodeURIComponent(segment);
@@ -27,8 +33,9 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
     database,
     waitForConnections: true,
     connectionLimit: 5,
-    queueLimit: 0,
-    /** Antes do proxy da hospedagem devolver 503 por timeout, falhamos com erro JSON legível. */
+    /** Evita fila infinita quando o pool está cheio (nginx 504 enquanto a requisição espera). */
+    queueLimit: 40,
+    /** Antes do proxy da hospedagem devolver 503/504, falhamos com erro JSON legível. */
     connectTimeout: 12_000,
     enableKeepAlive: true,
   };

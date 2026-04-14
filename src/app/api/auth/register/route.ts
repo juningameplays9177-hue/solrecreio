@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { getPool } from "@/lib/db";
+import { getPool, MYSQL_QUERY_TIMEOUT_MS } from "@/lib/db";
 import { applySessionCookie, clientProfileComplete, signSession } from "@/lib/auth";
 import { registrationFormSchema } from "@/lib/validators";
 import {
@@ -48,26 +48,31 @@ export async function POST(request: Request) {
     const name = sanitizeDisplayName(parsed.data.name);
 
     const pool = getPool();
-
-    const [existingEmail] = await pool.query<RowDataPacket[]>(
-      "SELECT id FROM users WHERE email = ? LIMIT 1",
-      [email]
-    );
-    if (existingEmail.length > 0) {
-      return NextResponse.json(
-        { error: "Este e-mail já está cadastrado." },
-        { status: 409 }
-      );
-    }
+    const qTimeout = MYSQL_QUERY_TIMEOUT_MS;
 
     if (cpf) {
-      const [existingCpf] = await pool.query<RowDataPacket[]>(
-        "SELECT id FROM users WHERE cpf = ? LIMIT 1",
-        [cpf]
-      );
-      if (existingCpf.length > 0) {
+      const [dup] = await pool.query<RowDataPacket[]>({
+        sql: "SELECT email, cpf FROM users WHERE email = ? OR cpf = ? LIMIT 1",
+        values: [email, cpf],
+        timeout: qTimeout,
+      });
+      const row = dup[0];
+      if (row) {
+        const msg =
+          row.email === email
+            ? "Este e-mail já está cadastrado."
+            : "Este CPF já está cadastrado.";
+        return NextResponse.json({ error: msg }, { status: 409 });
+      }
+    } else {
+      const [existingEmail] = await pool.query<RowDataPacket[]>({
+        sql: "SELECT id FROM users WHERE email = ? LIMIT 1",
+        values: [email],
+        timeout: qTimeout,
+      });
+      if (existingEmail.length > 0) {
         return NextResponse.json(
-          { error: "Este CPF já está cadastrado." },
+          { error: "Este e-mail já está cadastrado." },
           { status: 409 }
         );
       }
@@ -75,11 +80,12 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO users (email, password_hash, name, cpf, phone, role)
+    const [result] = await pool.query<ResultSetHeader>({
+      sql: `INSERT INTO users (email, password_hash, name, cpf, phone, role)
        VALUES (?, ?, ?, ?, ?, 'CLIENT')`,
-      [email, passwordHash, name, cpf, phone]
-    );
+      values: [email, passwordHash, name, cpf, phone],
+      timeout: qTimeout,
+    });
 
     const rawId = result.insertId;
     const insertId =

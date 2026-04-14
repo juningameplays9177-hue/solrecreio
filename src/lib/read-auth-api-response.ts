@@ -21,7 +21,7 @@ export async function readAuthApiJson<TResult extends Record<string, unknown>>(
     return {
       ok: false,
       message:
-        "A hospedagem respondeu como indisponível (502/503). Costuma ser MySQL parado, DATABASE_URL/AUTH_SECRET em falta ou app Node a reiniciar. Confira o painel da Hostinger, aguarde um minuto e tente de novo.",
+        "A hospedagem respondeu como indisponível (502/503/504). Costuma ser MySQL parado, DATABASE_URL/AUTH_SECRET em falta, timeout do nginx ou app Node a reiniciar. Confira o painel da Hostinger, aguarde um minuto e tente de novo.",
     };
   }
 
@@ -33,7 +33,7 @@ export async function readAuthApiJson<TResult extends Record<string, unknown>>(
 }
 
 function fallbackMessage(status: number, fallback: string): string {
-  if (status === 503 || status === 502) {
+  if (status === 503 || status === 502 || status === 504) {
     return "Servidor indisponível temporariamente. Verifique MySQL e variáveis de ambiente na hospedagem, ou tente de novo em instantes.";
   }
   return fallback;

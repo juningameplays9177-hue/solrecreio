@@ -201,6 +201,13 @@ export function mysqlFriendlyMessage(e: unknown): string | undefined {
   if (code === "PROTOCOL_CONNECTION_LOST" || code === "ECONNRESET") {
     return "Conexão com o MySQL caiu. Tente de novo e verifique se o servidor MySQL está estável.";
   }
+  if (code === "PROTOCOL_SEQUENCE_TIMEOUT") {
+    return "A consulta ao MySQL demorou demais. Verifique DATABASE_URL/rede ou tente de novo.";
+  }
+  const nested = extractNestedErrorMessage(e);
+  if (/Queue limit reached|No connections available/i.test(nested)) {
+    return "Muitas consultas ao MySQL ao mesmo tempo. Aguarde um instante e tente de novo.";
+  }
   return undefined;
 }
 

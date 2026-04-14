@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { getPool } from "@/lib/db";
+import { getPool, MYSQL_QUERY_TIMEOUT_MS } from "@/lib/db";
 import { applySessionCookie, clientProfileComplete, signSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
 import {
@@ -53,10 +53,11 @@ export async function POST(request: Request) {
     const email = normalizeEmail(parsed.data.email);
     const pool = getPool();
 
-    const [rows] = await pool.query<UserRow[]>(
-      "SELECT id, email, name, password_hash, role, cpf, phone FROM users WHERE email = ? LIMIT 1",
-      [email]
-    );
+    const [rows] = await pool.query<UserRow[]>({
+      sql: "SELECT id, email, name, password_hash, role, cpf, phone FROM users WHERE email = ? LIMIT 1",
+      values: [email],
+      timeout: MYSQL_QUERY_TIMEOUT_MS,
+    });
 
     const user = rows[0];
     if (!user) {
