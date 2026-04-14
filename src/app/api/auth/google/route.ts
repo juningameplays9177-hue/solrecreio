@@ -1,12 +1,10 @@
-﻿import { randomBytes } from "crypto";
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+﻿import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { applySessionCookie, clientProfileComplete, signSession } from "@/lib/auth";
 import { googleIdTokenSchema } from "@/lib/validators";
 import { apiErrorMessage, getFirebaseAuthServerEnvErrors, getServerEnvErrors } from "@/lib/server-env";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
-import type { ResultSetHeader, RowDataPacket } from "mysql2";
+import type { RowDataPacket } from "mysql2";
 import type { UserRole } from "@/lib/auth";
 
 type UserRow = RowDataPacket & {
@@ -92,32 +90,15 @@ export async function POST(request: Request) {
     if (!user) {
       const displayName =
         googleDisplayName ?? (email.split("@")[0] || "Cliente").slice(0, 255);
-      const passwordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 10);
-      const [ins] = await pool.query<ResultSetHeader>(
-        `INSERT INTO users (email, password_hash, name, cpf, phone, role)
-         VALUES (?, ?, ?, NULL, NULL, 'CLIENT')`,
-        [email, passwordHash, displayName]
+      return NextResponse.json(
+        {
+          ok: true,
+          needsRegistration: true,
+          email,
+          name: displayName,
+        },
+        jsonNoStore
       );
-      const rawId = ins.insertId;
-      let insertId = typeof rawId === "bigint" ? Number(rawId) : Number(rawId);
-      if (!Number.isFinite(insertId) || insertId <= 0) {
-        const [idRows] = await pool.query<RowDataPacket[]>(
-          "SELECT LAST_INSERT_ID() AS id"
-        );
-        const lid = (idRows[0] as { id?: unknown } | undefined)?.id;
-        insertId = typeof lid === "bigint" ? Number(lid) : Number(lid);
-      }
-      if (!Number.isFinite(insertId) || insertId <= 0) {
-        throw new Error("Não foi possível criar o usuário (ID inválido).");
-      }
-      user = {
-        id: insertId,
-        email,
-        name: displayName,
-        role: "CLIENT",
-        cpf: null,
-        phone: null,
-      };
     }
 
     const profileComplete = clientProfileComplete(user.role, user.cpf, user.phone);

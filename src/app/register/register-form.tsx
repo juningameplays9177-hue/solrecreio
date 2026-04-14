@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { AuthAccessShell } from "@/components/auth/auth-access-shell";
 import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
@@ -62,10 +62,13 @@ function passwordHints(password: string): { ok: boolean; label: string }[] {
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get("email") ?? "";
+  const prefilledName = searchParams.get("name") ?? "";
   const { runGoogleLogin, googleLoading, googleError, setGoogleError } =
     useGoogleAuthRedirect();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(prefilledName);
+  const [email, setEmail] = useState(prefilledEmail);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [cpf, setCpf] = useState("");
@@ -130,7 +133,7 @@ export function RegisterForm() {
         if (data.profileComplete === false) {
           router.push("/completar-cadastro");
         } else {
-          router.push("/painel");
+          router.push("/loja");
         }
         router.refresh();
       } finally {

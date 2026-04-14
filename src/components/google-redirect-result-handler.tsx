@@ -28,8 +28,19 @@ export function GoogleRedirectResultHandler() {
           setBanner(out.error);
           return;
         }
-        if (out.role === "ADMIN") router.push("/admin");
-        else router.push("/painel");
+        if (out.needsRegistration) {
+          const params = new URLSearchParams();
+          if (out.email) params.set("email", out.email);
+          if (out.name) params.set("name", out.name);
+          const qs = params.toString();
+          router.push(qs ? `/register?${qs}` : "/register");
+        } else if (out.role === "ADMIN") {
+          router.push("/admin");
+        } else if (out.profileComplete === false) {
+          router.push("/completar-cadastro");
+        } else {
+          router.push("/loja");
+        }
         router.refresh();
       } catch (e) {
         if (cancelled) return;

@@ -4,7 +4,8 @@ import {
 } from "@/lib/scrub-stale-google-config-message";
 
 export type GoogleAuthExchangeResult =
-  | { ok: true; role: string; profileComplete: boolean }
+  | { ok: true; role: string; profileComplete: boolean; needsRegistration?: false }
+  | { ok: true; needsRegistration: true; email: string; name?: string }
   | { ok: false; error: string };
 
 export async function exchangeGoogleIdToken(idToken: string): Promise<GoogleAuthExchangeResult> {
@@ -17,6 +18,11 @@ export async function exchangeGoogleIdToken(idToken: string): Promise<GoogleAuth
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     return { ok: false, error: scrubStaleGoogleConfigMessage(apiErrorString(data)) };
+  }
+  if (data?.needsRegistration === true) {
+    const email = typeof data.email === "string" ? data.email : "";
+    const name = typeof data.name === "string" ? data.name : undefined;
+    return { ok: true, needsRegistration: true, email, name };
   }
   const role = typeof data.role === "string" ? data.role : "CLIENT";
   const profileComplete = data.profileComplete !== false;
