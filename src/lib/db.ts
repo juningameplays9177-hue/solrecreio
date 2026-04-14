@@ -16,11 +16,26 @@ function safeDecodeURIComponent(segment: string): string {
   }
 }
 
+/**
+ * `localhost` no Node costuma resolver para IPv6 (::1). O MySQL da Hostinger
+ * costuma autorizar `127.0.0.1` ou `localhost` (socket), mas não `::1` → "Access denied … @'::1'".
+ * Forçamos IPv4 salvo opt-out (MYSQL_KEEP_LOCALHOST=1 para socket Unix local).
+ */
+function resolveMysqlTcpHostname(hostname: string): string {
+  const raw = hostname || "localhost";
+  const h = raw.toLowerCase();
+  if (h !== "localhost") return raw;
+  const rawKeep = process.env.MYSQL_KEEP_LOCALHOST;
+  const v = typeof rawKeep === "string" ? rawKeep.trim().toLowerCase() : "";
+  if (v === "1" || v === "true") return "localhost";
+  return "127.0.0.1";
+}
+
 function parseMysqlUrl(connectionString: string): PoolOptions {
   const u = new URL(connectionString);
   const pathDb = u.pathname.replace(/^\//, "").split("/")[0] ?? "";
   const database = safeDecodeURIComponent(pathDb).trim();
-  const host = (u.hostname || "localhost").toLowerCase();
+  const host = resolveMysqlTcpHostname(u.hostname || "localhost");
 
   const user = safeDecodeURIComponent(u.username).trim();
   const password = (u.password ? safeDecodeURIComponent(u.password) : "").trim();

@@ -2,6 +2,7 @@
  * Resolve a URL mysql://… a partir do .env (chame `import "dotenv/config"` antes).
  * MYSQL_HOST + MYSQL_USER + MYSQL_DATABASE têm prioridade sobre DATABASE_URL.
  */
+import { normalizeMysqlHostForNode } from "./normalize-mysql-host.mjs";
 
 function stripEnvValue(raw) {
   if (typeof raw !== "string") return undefined;
@@ -20,13 +21,14 @@ export function resolveDatabaseUrlFromEnv() {
   const user = stripEnvValue(process.env.MYSQL_USER);
   const database = stripEnvValue(process.env.MYSQL_DATABASE);
   if (host && user && database) {
+    const tcpHost = normalizeMysqlHostForNode(host);
     const portRaw = stripEnvValue(process.env.MYSQL_PORT);
     const port = portRaw && /^\d+$/.test(portRaw) ? portRaw : "3306";
     const password =
       process.env.MYSQL_PASSWORD !== undefined
         ? stripEnvValue(process.env.MYSQL_PASSWORD) ?? ""
         : "";
-    return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
+    return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${tcpHost}:${port}/${encodeURIComponent(database)}`;
   }
   return stripEnvValue(process.env.DATABASE_URL);
 }

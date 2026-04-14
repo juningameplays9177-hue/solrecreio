@@ -5,13 +5,14 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
 import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
+import { normalizeMysqlHostForNode } from "./normalize-mysql-host.mjs";
 
 function parseMysqlUrl(connectionString) {
   const u = new URL(connectionString);
   const pathDb = u.pathname.replace(/^\//, "").split("/")[0] ?? "";
   const database = decodeURIComponent(pathDb);
   return {
-    host: u.hostname || "localhost",
+    host: normalizeMysqlHostForNode(u.hostname || "localhost"),
     port: u.port ? Number(u.port) : 3306,
     user: decodeURIComponent(u.username),
     password: u.password ? decodeURIComponent(u.password) : "",

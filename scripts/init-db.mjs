@@ -1,6 +1,7 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
 import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
+import { normalizeMysqlHostForNode } from "./normalize-mysql-host.mjs";
 
 const usersSql = `
 CREATE TABLE IF NOT EXISTS users (
@@ -96,7 +97,7 @@ async function main() {
   }
 
   const base = {
-    host: u.hostname || "localhost",
+    host: normalizeMysqlHostForNode(u.hostname || "localhost"),
     port: u.port ? Number(u.port) : 3306,
     user: decodeURIComponent(u.username),
     password: u.password ? decodeURIComponent(u.password) : "",
