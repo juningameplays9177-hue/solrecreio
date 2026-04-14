@@ -105,7 +105,9 @@ export async function POST(request: Request) {
     return applySessionCookie(res, token);
   } catch (e) {
     console.error(e);
-    const status = mysqlAuthRouteCatchStatus(e);
+    const statusRaw = mysqlAuthRouteCatchStatus(e);
+    /** 502 no browser aparece como “Bad Gateway”; aqui devolvemos 500 com a mesma mensagem MySQL. */
+    const status = statusRaw === 502 ? 500 : statusRaw;
     return NextResponse.json(
       {
         error: apiErrorMessage(e, "Erro ao cadastrar. Tente novamente."),
