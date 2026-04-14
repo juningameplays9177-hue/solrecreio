@@ -23,7 +23,7 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
   const host = (u.hostname || "localhost").toLowerCase();
 
   const user = safeDecodeURIComponent(u.username).trim();
-  const password = u.password ? safeDecodeURIComponent(u.password) : "";
+  const password = (u.password ? safeDecodeURIComponent(u.password) : "").trim();
 
   const base: PoolOptions = {
     host,
@@ -61,19 +61,20 @@ function parseMysqlUrl(connectionString: string): PoolOptions {
   return base;
 }
 
-function getPoolConfig(): PoolOptions {
+const g = globalThis as unknown as { mysqlPool?: mysql.Pool; mysqlPoolSourceUrl?: string };
+
+export function getPool(): mysql.Pool {
   const url = getNormalizedDatabaseUrl();
   if (!url) {
     throw new Error("Defina DATABASE_URL ou MYSQL_HOST/MYSQL_USER/MYSQL_DATABASE no .env");
   }
-  return parseMysqlUrl(url);
-}
-
-const g = globalThis as unknown as { mysqlPool?: mysql.Pool };
-
-export function getPool(): mysql.Pool {
+  if (g.mysqlPool && g.mysqlPoolSourceUrl !== url) {
+    void g.mysqlPool.end().catch(() => {});
+    g.mysqlPool = undefined;
+  }
   if (!g.mysqlPool) {
-    g.mysqlPool = mysql.createPool(getPoolConfig());
+    g.mysqlPoolSourceUrl = url;
+    g.mysqlPool = mysql.createPool(parseMysqlUrl(url));
   }
   return g.mysqlPool;
 }

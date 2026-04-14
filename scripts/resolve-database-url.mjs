@@ -5,7 +5,7 @@
 
 function stripEnvValue(raw) {
   if (typeof raw !== "string") return undefined;
-  let s = raw.replace(/^\uFEFF/, "").trim();
+  let s = raw.replace(/^\uFEFF/, "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
     (s.startsWith("'") && s.endsWith("'"))

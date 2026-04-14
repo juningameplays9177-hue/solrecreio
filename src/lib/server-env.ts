@@ -13,10 +13,10 @@ function safeDecodeURIComponent(segment: string): string {
   }
 }
 
-/** Remove BOM, aspas envolventes e espaços (comum ao colar do painel da Hostinger). */
+/** Remove BOM, zero-width, aspas envolventes e espaços (comum ao colar do painel da Hostinger). */
 function stripEnvValue(raw: string | undefined): string | undefined {
   if (typeof raw !== "string") return undefined;
-  let s = raw.replace(/^\uFEFF/, "").trim();
+  let s = raw.replace(/^\uFEFF/, "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
     (s.startsWith("'") && s.endsWith("'"))
@@ -73,8 +73,8 @@ function repairMysqlDatabaseUrlAmbiguousAt(dbUrl: string): string {
   const hostDb = rest.slice(sep + 1);
   const colon = creds.indexOf(":");
   if (colon === -1) return dbUrl;
-  const userRaw = creds.slice(0, colon);
-  const passRaw = creds.slice(colon + 1);
+  const userRaw = creds.slice(0, colon).replace(/[\u200B-\u200D\uFEFF]/g, "");
+  const passRaw = creds.slice(colon + 1).replace(/[\u200B-\u200D\uFEFF]/g, "");
   if (!userRaw) return dbUrl;
 
   const user = safeDecodeURIComponent(userRaw);
@@ -91,7 +91,7 @@ function reencodeMysqlUserInfoFromUrl(dbUrl: string): string {
     const u = new URL(dbUrl);
     if (!/^mysql:$/i.test(u.protocol)) return dbUrl;
     const user = safeDecodeURIComponent(u.username).trim();
-    const pass = u.password ? safeDecodeURIComponent(u.password) : "";
+    const pass = (u.password ? safeDecodeURIComponent(u.password) : "").trim();
     return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${u.host}${u.pathname}${u.search}`;
   } catch {
     return dbUrl;
@@ -105,7 +105,7 @@ export function getNormalizedDatabaseUrl(): string | undefined {
 
   const raw = process.env.DATABASE_URL;
   if (typeof raw !== "string") return undefined;
-  let s = raw.replace(/^\uFEFF/, "").trim();
+  let s = raw.replace(/^\uFEFF/, "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
     (s.startsWith("'") && s.endsWith("'"))
@@ -264,7 +264,12 @@ export function mysqlFriendlyMessage(e: unknown): string | undefined {
     return "Não foi possível conectar ao MySQL. Ligue o MySQL (serviço no Windows) e confira DATABASE_URL ou MYSQL_* no .env.";
   }
   if (code === "ER_ACCESS_DENIED_ERROR") {
-    return "Acesso negado ao MySQL. Confira utilizador e senha no painel (hPanel → Bases de dados) e no .env: use MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE e MYSQL_PASSWORD (senha em texto, sem codificar URL) ou corrija DATABASE_URL (# : ? & @ na senha têm de estar codificados na URL).";
+    const detail = sqlMessage(e);
+    const serverHint =
+      detail && detail.length > 0 && detail.length < 280
+        ? ` (${detail})`
+        : "";
+    return `Acesso negado ao MySQL${serverHint}. Confirme no hPanel → Bases de dados o utilizador MySQL e a senha (repor senha se precisar). No .env: use MYSQL_HOST=localhost, MYSQL_USER, MYSQL_DATABASE e MYSQL_PASSWORD com a senha em texto; ou DATABASE_URL com @ na senha como %40. Reinicie a app Node após alterar variáveis.`;
   }
   if (code === "ER_NOT_SUPPORTED_AUTH_MODE") {
     return "Modo de autenticação MySQL não suportado por este cliente. No hPanel, use utilizador MySQL nativo do plano ou altere o plugin de autenticação da conta.";
