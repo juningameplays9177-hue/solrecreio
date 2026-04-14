@@ -17,6 +17,41 @@ export function AuthAccessShell({
   variant = "dark",
 }: AuthAccessShellProps) {
   const isLight = variant === "light";
+  const visualCards = isLight
+    ? [
+        {
+          title: "Verao e praia",
+          subtitle: "Ambiente claro e acolhedor",
+          className:
+            "from-amber-100/95 via-orange-50 to-red-100/80 border-amber-200/80",
+        },
+        {
+          title: "Confianca",
+          subtitle: "Cadastro rapido e seguro",
+          className:
+            "from-white via-amber-50 to-yellow-100/80 border-yellow-200/90",
+        },
+        {
+          title: "Energia da marca",
+          subtitle: "Ambar e vermelho em destaque",
+          className:
+            "from-red-100/80 via-orange-50 to-amber-100/90 border-red-200/70",
+        },
+      ]
+    : [
+        {
+          title: "Acesso seguro",
+          subtitle: "Protecao em todas as etapas",
+          className:
+            "from-slate-900 via-slate-800 to-amber-950/90 border-white/10",
+        },
+        {
+          title: "Painel completo",
+          subtitle: "Gestao e cashback em um lugar",
+          className:
+            "from-[#1b1410] via-[#23180e] to-[#34170f] border-amber-300/20",
+        },
+      ];
 
   return (
     <div
@@ -110,6 +145,58 @@ export function AuthAccessShell({
             Acesso seguro com sessão criptografada. Suas credenciais são
             protegidas e nunca expostas no navegador.
           </p>
+
+          <div className="mt-8 hidden gap-3 lg:grid">
+            {visualCards.map((card) => (
+              <div
+                key={card.title}
+                className={
+                  isLight
+                    ? `relative overflow-hidden rounded-2xl border bg-gradient-to-br p-4 shadow-sm ${card.className}`
+                    : `relative overflow-hidden rounded-2xl border bg-gradient-to-br p-4 ${card.className}`
+                }
+              >
+                <div
+                  className={
+                    isLight
+                      ? "pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-white/45 blur-xl"
+                      : "pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-amber-300/15 blur-xl"
+                  }
+                />
+                <div className="relative flex items-center justify-between gap-3">
+                  <div>
+                    <p
+                      className={
+                        isLight
+                          ? "text-sm font-semibold text-slate-800"
+                          : "text-sm font-semibold text-amber-100"
+                      }
+                    >
+                      {card.title}
+                    </p>
+                    <p
+                      className={
+                        isLight
+                          ? "mt-1 text-xs text-slate-600"
+                          : "mt-1 text-xs text-slate-300"
+                      }
+                    >
+                      {card.subtitle}
+                    </p>
+                  </div>
+                  <img
+                    src="/pwa-icon.svg"
+                    alt=""
+                    className={
+                      isLight
+                        ? "h-10 w-10 rounded-xl border border-white/60 bg-white/70 p-1.5 shadow-sm"
+                        : "h-10 w-10 rounded-xl border border-white/20 bg-white/10 p-1.5"
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </header>
 
         <div className="flex flex-1 flex-col justify-center lg:max-w-md lg:pl-2">
