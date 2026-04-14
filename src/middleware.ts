@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
       return noStore(NextResponse.redirect(new URL("/admin", request.url)));
     }
     if (role === "CLIENT" && profileComplete) {
-      return noStore(NextResponse.redirect(new URL("/painel", request.url)));
+      return noStore(NextResponse.redirect(new URL("/mercado", request.url)));
     }
     return noStore(NextResponse.next());
   }

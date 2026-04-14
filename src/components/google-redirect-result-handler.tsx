@@ -38,7 +38,7 @@ export function GoogleRedirectResultHandler() {
         } else if (out.profileComplete === false) {
           router.push("/completar-cadastro");
         } else {
-          router.push("/loja");
+          router.push("/mercado");
         }
         router.refresh();
       } catch (e) {

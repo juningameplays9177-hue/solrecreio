@@ -44,7 +44,7 @@ export default function CompletarCadastroPage() {
         setError(typeof data.error === "string" ? data.error : "Não foi possível salvar.");
         return;
       }
-      router.push("/painel");
+      router.push("/mercado");
       router.refresh();
     } finally {
       setLoading(false);

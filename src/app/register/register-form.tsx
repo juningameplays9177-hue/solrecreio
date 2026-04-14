@@ -132,7 +132,7 @@ export function RegisterForm() {
         if (data.profileComplete === false) {
           router.push("/completar-cadastro");
         } else {
-          router.push("/loja");
+          router.push("/mercado");
         }
       } finally {
         setLoading(false);
