@@ -10,8 +10,11 @@ const inter = Inter({
   display: "swap",
 });
 
-// Evita HTML estático antigo em CDN apontando para chunks/CSS de builds anteriores.
-export const dynamic = "force-dynamic";
+/**
+ * Evitamos `force-dynamic` no layout raiz: em hospedagens partilhadas isso força SSR em
+ * todas as páginas e aumenta 503 em cold start. O middleware já envia no-cache nas rotas
+ * relevantes; páginas sensíveis podem exportar `dynamic` localmente se precisar.
+ */
 
 export const metadata: Metadata = {
   title: "Sol do Recreio — Acesso",

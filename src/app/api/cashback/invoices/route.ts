@@ -42,7 +42,7 @@ export async function GET() {
 
     if (envErrs.length > 0) {
 
-      return NextResponse.json({ error: envErrs[0] }, { status: 503 });
+      return NextResponse.json({ error: envErrs[0] }, { status: 500 });
 
     }
 
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
 
     if (envErrs.length > 0) {
 
-      return NextResponse.json({ error: envErrs[0] }, { status: 503 });
+      return NextResponse.json({ error: envErrs[0] }, { status: 500 });
 
     }
 

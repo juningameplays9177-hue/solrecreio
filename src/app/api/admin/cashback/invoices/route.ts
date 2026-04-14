@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const envErrs = getServerEnvErrors();
     if (envErrs.length > 0) {
-      return NextResponse.json({ error: envErrs[0] }, { status: 503 });
+      return NextResponse.json({ error: envErrs[0] }, { status: 500 });
     }
     const session = await getSessionFromCookies();
     if (!session || session.role !== "ADMIN") {
