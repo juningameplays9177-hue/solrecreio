@@ -264,12 +264,16 @@ export function mysqlFriendlyMessage(e: unknown): string | undefined {
     return "Não foi possível conectar ao MySQL. Ligue o MySQL (serviço no Windows) e confira DATABASE_URL ou MYSQL_* no .env.";
   }
   if (code === "ER_ACCESS_DENIED_ERROR") {
-    const detail = sqlMessage(e);
+    const detail = sqlMessage(e) ?? "";
     const serverHint =
-      detail && detail.length > 0 && detail.length < 280
-        ? ` (${detail})`
-        : "";
-    return `Acesso negado ao MySQL${serverHint}. Confirme no hPanel → Bases de dados o utilizador MySQL e a senha (repor senha se precisar). No .env: use MYSQL_HOST=localhost, MYSQL_USER, MYSQL_DATABASE e MYSQL_PASSWORD com a senha em texto; ou DATABASE_URL com @ na senha como %40. Reinicie a app Node após alterar variáveis.`;
+      detail && detail.length > 0 && detail.length < 280 ? ` (${detail})` : "";
+    const localLike =
+      /127\.0\.0\.1|'localhost'|::1/i.test(detail) ||
+      /127\.0\.0\.1|'localhost'|::1/i.test(serverHint);
+    const localHelp = localLike
+      ? ` Use só MYSQL_* OU só DATABASE_URL (não os dois). Com MYSQL_*: MYSQL_HOST=localhost, MYSQL_USER, MYSQL_DATABASE e MYSQL_PASSWORD (apague DATABASE_URL do painel para não cair num URL com 127.0.0.1). Confirme a palavra-passe no MySQL. Se o erro mencionar apenas 127.0.0.1, a ligação ainda está a usar um URL antigo ou NODE sem reiniciar. Se aparecer \`::1\`, defina MYSQL_MAP_LOCALHOST_TO_IPV4=1.`
+      : ` Em hospedagem: utilize o utilizador MySQL do painel (não root), host e base indicados lá.`;
+    return `Acesso negado ao MySQL${serverHint}.${localHelp} Reinicie o servidor Node após alterar o .env.`;
   }
   if (code === "ER_NOT_SUPPORTED_AUTH_MODE") {
     return "Modo de autenticação MySQL não suportado por este cliente. No hPanel, use utilizador MySQL nativo do plano ou altere o plugin de autenticação da conta.";

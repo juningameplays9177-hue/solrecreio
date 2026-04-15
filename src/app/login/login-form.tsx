@@ -143,6 +143,14 @@ export function LoginForm() {
             className={inputClass}
             placeholder="••••••••"
           />
+          <div className="mt-2 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-[#fbc02d] transition-colors hover:text-amber-200"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
         </div>
 
         {error ? (

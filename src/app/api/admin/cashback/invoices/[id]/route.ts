@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { computeCashbackCredit, getCashbackPercentage } from "@/lib/app-settings";
+import { ensureCashbackLedgerSchema } from "@/lib/cashback-ledger-schema";
 import { notifyUser } from "@/lib/notify-client";
+import { creditCashbackCapped } from "@/services/cashback-wallet-service";
 import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
 import type { RowDataPacket } from "mysql2";
 
@@ -53,12 +55,14 @@ export async function POST(
       typeof body.note === "string" ? body.note.trim().slice(0, 2000) : "";
 
     const pool = getPool();
+    await ensureCashbackLedgerSchema(pool);
     const pct = await getCashbackPercentage(pool);
 
     const conn = await pool.getConnection();
     let userIdForNotify = 0;
     let approvedCredit = 0;
     let invoiceAmount = 0;
+    let cappedApproval = false;
 
     try {
       await conn.beginTransaction();
@@ -86,17 +90,19 @@ export async function POST(
 
       if (action === "approve") {
         const credit = computeCashbackCredit(invoiceAmount, pct);
-        approvedCredit = credit;
-
-        await conn.query(
-          `UPDATE users SET cashback_balance = cashback_balance + ? WHERE id = ?`,
-          [credit, userId]
-        );
+        const { credited, capped } = await creditCashbackCapped(conn, userId, credit, {
+          source: "invoice_approval",
+          refType: "invoice",
+          refId: id,
+          metadata: { invoiceAmount, pct, computedCredit: credit },
+        });
+        approvedCredit = credited;
+        cappedApproval = capped;
 
         await conn.query(
           `UPDATE cashback_invoices SET status = 'APPROVED', credited_amount = ?, reviewed_at = NOW(), admin_note = ?
            WHERE id = ?`,
-          [credit, note || null, id]
+          [credited, note || null, id]
         );
       } else {
         await conn.query(
@@ -116,11 +122,14 @@ export async function POST(
 
     try {
       if (action === "approve") {
+        const capHint = cappedApproval
+          ? ` O teto de R$ 100,00 foi aplicado; creditado: R$ ${approvedCredit.toFixed(2)}.`
+          : "";
         await notifyUser(
           pool,
           userIdForNotify,
           "Cashback aprovado",
-          `Sua nota fiscal foi aprovada. Valor informado: R$ ${invoiceAmount.toFixed(2)}. Cashback de ${pct}% creditado: R$ ${approvedCredit.toFixed(2)}.`
+          `Sua nota fiscal foi aprovada. Valor informado: R$ ${invoiceAmount.toFixed(2)}. Cashback de ${pct}%: R$ ${approvedCredit.toFixed(2)} creditado.${capHint}`
         );
       } else {
         await notifyUser(

@@ -7,6 +7,7 @@ import { PainelProfileCompletionCard } from "@/components/painel-profile-complet
 import { PainelCashbackForm } from "@/components/painel-cashback-form";
 import { PainelCashbackRedemptionForm } from "@/components/painel-cashback-redemption-form";
 import { CashbackRedemptionsList } from "@/components/cashback-redemptions-list";
+import { PainelCashbackWallet } from "@/components/painel-cashback-wallet";
 import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
 import type { RowDataPacket } from "mysql2";
 
@@ -200,6 +201,9 @@ export default async function PainelPage() {
           <>
             <div className="mt-6">
               <ClientNotifications />
+            </div>
+            <div className="mt-6">
+              <PainelCashbackWallet />
             </div>
             <PainelCashbackForm />
             <PainelCashbackRedemptionForm availableBalance={balance} />

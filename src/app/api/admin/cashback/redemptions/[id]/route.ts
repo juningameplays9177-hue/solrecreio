@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import type { RowDataPacket } from "mysql2";
 import { getPool } from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
+import { ensureCashbackLedgerSchema } from "@/lib/cashback-ledger-schema";
 import {
   ensureCashbackRedemptionsSchema,
   generateCouponCode,
 } from "@/lib/cashback-redemptions";
 import { notifyUser } from "@/lib/notify-client";
+import { debitCashbackWallet } from "@/services/cashback-wallet-service";
 import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
 
 export const runtime = "nodejs";
@@ -56,6 +58,7 @@ export async function POST(
     const note = typeof body.note === "string" ? body.note.trim().slice(0, 2000) : "";
     const pool = getPool();
     await ensureCashbackRedemptionsSchema(pool);
+    await ensureCashbackLedgerSchema(pool);
 
     const conn = await pool.getConnection();
     let userIdForNotify = 0;
@@ -124,12 +127,11 @@ export async function POST(
           }
         }
 
-        await conn.query(
-          `UPDATE users
-           SET cashback_balance = cashback_balance - ?
-           WHERE id = ?`,
-          [requestedAmount, userIdForNotify]
-        );
+        await debitCashbackWallet(conn, userIdForNotify, requestedAmount, {
+          source: "redemption_approval",
+          refType: "redemption",
+          refId: id,
+        });
       } else {
         await conn.query(
           `UPDATE cashback_redemptions

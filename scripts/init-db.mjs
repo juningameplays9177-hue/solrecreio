@@ -58,6 +58,38 @@ CREATE TABLE IF NOT EXISTS cashback_invoices (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
+const passwordResetSql = `
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pwd_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_pwd_reset_token_hash (token_hash),
+  INDEX idx_pwd_reset_user (user_id),
+  INDEX idx_pwd_reset_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const cashbackLedgerSql = `
+CREATE TABLE IF NOT EXISTS cashback_ledger (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  kind ENUM('EARN', 'USE') NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  balance_after DECIMAL(10,2) NOT NULL,
+  source VARCHAR(48) NOT NULL,
+  ref_type VARCHAR(32) NULL,
+  ref_id INT UNSIGNED NULL,
+  metadata JSON NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cashback_ledger_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_cashback_ledger_user_created (user_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
 const redemptionsSql = `
 CREATE TABLE IF NOT EXISTS cashback_redemptions (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -116,8 +148,12 @@ async function main() {
   await conn.query(notificationsSql);
   await conn.query(invoicesSql);
   await conn.query(redemptionsSql);
+  await conn.query(passwordResetSql);
+  await conn.query(cashbackLedgerSql);
   await conn.end();
-  console.log(`Banco "${dbName}", users, cashback_invoices e cashback_redemptions criados ou já existentes.`);
+  console.log(
+    `Banco "${dbName}", users, cashback, password_reset_tokens e cashback_ledger criados ou já existentes.`
+  );
 }
 
 main().catch((e) => {

@@ -17,18 +17,25 @@ function safeDecodeURIComponent(segment: string): string {
 }
 
 /**
- * `localhost` no Node costuma resolver para IPv6 (::1). O MySQL da Hostinger
- * costuma autorizar `127.0.0.1` ou `localhost` (socket), mas não `::1` → "Access denied … @'::1'".
- * Forçamos IPv4 salvo opt-out (MYSQL_KEEP_LOCALHOST=1 para socket Unix local).
+ * O MySQL trata `user@localhost` e `user@127.0.0.1` como contas diferentes. Forçar 127.0.0.1
+ * quando o .env diz `localhost` quebra muitos PCs (só existe root@localhost).
+ *
+ * Por omissão mantém `localhost` tal como veio no URL / MYSQL_HOST.
+ * Só mapeia para 127.0.0.1 com opt-in explícito (IPv6 ::1 ou política do servidor).
+ *
+ * - `MYSQL_MAP_LOCALHOST_TO_IPV4=1` ou `true`: `localhost` → `127.0.0.1`
+ * - `MYSQL_KEEP_LOCALHOST=1`: redundante com o comportamento por omissão (mantido por compatibilidade)
  */
 function resolveMysqlTcpHostname(hostname: string): string {
   const raw = hostname || "localhost";
   const h = raw.toLowerCase();
   if (h !== "localhost") return raw;
-  const rawKeep = process.env.MYSQL_KEEP_LOCALHOST;
-  const v = typeof rawKeep === "string" ? rawKeep.trim().toLowerCase() : "";
-  if (v === "1" || v === "true") return "localhost";
-  return "127.0.0.1";
+
+  const forceV4 =
+    process.env.MYSQL_MAP_LOCALHOST_TO_IPV4?.trim().toLowerCase() === "1" ||
+    process.env.MYSQL_MAP_LOCALHOST_TO_IPV4?.trim().toLowerCase() === "true";
+
+  return forceV4 ? "127.0.0.1" : "localhost";
 }
 
 function parseMysqlUrl(connectionString: string): PoolOptions {
