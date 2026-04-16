@@ -8,5 +8,5 @@ export async function POST(request: NextRequest) {
   if (accept.includes("application/json")) {
     return NextResponse.json({ ok: true });
   }
-  return NextResponse.redirect(new URL("/", request.url));
+  return NextResponse.redirect(new URL("/login", request.url));
 }
