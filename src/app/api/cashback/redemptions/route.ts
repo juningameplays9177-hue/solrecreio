@@ -11,6 +11,7 @@ import {
   ensureCashbackRedemptionsSchema,
   normalizeCashbackAmount,
 } from "@/lib/cashback-redemptions";
+import { clampUserCashbackBalanceToMax } from "@/lib/clamp-user-cashback-balance";
 import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
 
 export const runtime = "nodejs";
@@ -31,6 +32,7 @@ export async function GET() {
     const pool = getPool();
 
     await ensureCashbackRedemptionsSchema(pool);
+    await clampUserCashbackBalanceToMax(pool, userId);
 
     const [rows] = await pool.query<
       (RowDataPacket & {
@@ -119,6 +121,7 @@ export async function POST(request: Request) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
+      await clampUserCashbackBalanceToMax(conn, userId);
 
       const [userRows] = await conn.query<RowDataPacket[]>(
         "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",

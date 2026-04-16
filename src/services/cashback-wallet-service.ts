@@ -1,5 +1,6 @@
 import type { Pool, PoolConnection } from "mysql2/promise";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
+import { clampUserCashbackBalanceToMax } from "@/lib/clamp-user-cashback-balance";
 import { ensureCashbackLedgerSchema } from "@/lib/cashback-ledger-schema";
 import {
   CASHBACK_WALLET_MAX_BRL,
@@ -76,7 +77,14 @@ export async function creditCashbackCapped(
       "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
       [userId]
     );
-    const balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
+    let balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
+    if (balance > CASHBACK_WALLET_MAX_BRL) {
+      await conn.query(
+        `UPDATE users SET cashback_balance = ? WHERE id = ?`,
+        [CASHBACK_WALLET_MAX_BRL.toFixed(2), userId]
+      );
+      balance = CASHBACK_WALLET_MAX_BRL;
+    }
     return { credited: 0, balanceAfter: balance, capped: false };
   }
 
@@ -84,7 +92,14 @@ export async function creditCashbackCapped(
     "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
     [userId]
   );
-  const balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
+  let balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
+  if (balance > CASHBACK_WALLET_MAX_BRL) {
+    await conn.query(
+      `UPDATE users SET cashback_balance = ? WHERE id = ?`,
+      [CASHBACK_WALLET_MAX_BRL.toFixed(2), userId]
+    );
+    balance = CASHBACK_WALLET_MAX_BRL;
+  }
   const room = roundMoneyBrl(CASHBACK_WALLET_MAX_BRL - balance);
   const credited = roundMoneyBrl(Math.min(want, Math.max(0, room)));
   const capped = want > credited && credited < want;
@@ -119,7 +134,14 @@ export async function debitCashbackWallet(
     "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
     [userId]
   );
-  const balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
+  let balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
+  if (balance > CASHBACK_WALLET_MAX_BRL) {
+    await conn.query(
+      `UPDATE users SET cashback_balance = ? WHERE id = ?`,
+      [CASHBACK_WALLET_MAX_BRL.toFixed(2), userId]
+    );
+    balance = CASHBACK_WALLET_MAX_BRL;
+  }
   if (balance < amount) {
     throw new Error("Saldo insuficiente.");
   }
@@ -144,6 +166,7 @@ export async function getCashbackWalletSummary(
   historicoUsoCashback: LedgerEntry[];
 }> {
   await ensureCashbackLedgerSchema(pool);
+  await clampUserCashbackBalanceToMax(pool, userId);
 
   const [uRows] = await pool.query<RowDataPacket[]>(
     "SELECT cashback_balance FROM users WHERE id = ? LIMIT 1",

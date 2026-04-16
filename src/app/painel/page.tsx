@@ -8,6 +8,8 @@ import { PainelCashbackForm } from "@/components/painel-cashback-form";
 import { PainelRedemptionGate } from "@/components/painel-redemption-gate";
 import { CashbackRedemptionsList } from "@/components/cashback-redemptions-list";
 import { PainelCashbackWallet } from "@/components/painel-cashback-wallet";
+import { clampUserCashbackBalanceToMax } from "@/lib/clamp-user-cashback-balance";
+import { CASHBACK_WALLET_MAX_BRL } from "@/lib/cashback-wallet-constants";
 import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
 import type { RowDataPacket } from "mysql2";
 
@@ -107,6 +109,7 @@ export default async function PainelPage() {
 
   try {
     const pool = getPool();
+    await clampUserCashbackBalanceToMax(pool, userId);
     const [balRows] = await pool.query<RowDataPacket[]>(
       "SELECT cashback_balance, cpf, phone FROM users WHERE id = ? LIMIT 1",
       [userId]
@@ -194,6 +197,17 @@ export default async function PainelPage() {
           <p className="mt-1 text-3xl font-semibold text-[var(--accent)] sm:text-4xl">
             {dbError ? "—" : `R$ ${balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
           </p>
+          {!dbError && (
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              Limite máximo do programa:{" "}
+              <span className="font-semibold text-[var(--foreground)]">
+                R${" "}
+                {CASHBACK_WALLET_MAX_BRL.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
+            </p>
+          )}
           {dbError && <p className="mt-2 text-sm text-[var(--error)]">{dbError}</p>}
         </div>
 

@@ -24,6 +24,7 @@ import {
 
 } from "@/lib/upload-invoice";
 
+import { clampUserCashbackBalanceToMax } from "@/lib/clamp-user-cashback-balance";
 import { apiErrorMessage, getServerEnvErrors } from "@/lib/server-env";
 
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
@@ -57,6 +58,8 @@ export async function GET() {
     const pool = getPool();
 
     const userId = Number(client.sub);
+
+    await clampUserCashbackBalanceToMax(pool, userId);
 
     const [balanceRows] = await pool.query<RowDataPacket[]>(
 
