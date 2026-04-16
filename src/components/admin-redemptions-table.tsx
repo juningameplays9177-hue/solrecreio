@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -78,8 +79,20 @@ export function AdminRedemptionsTable({
             return (
               <tr key={item.id} className="border-b border-[var(--border)]/60">
                 <td className="p-4 align-top">
-                  <div className="font-medium">{item.user_name}</div>
-                  <div className="mt-0.5 text-sm text-[var(--muted)]">{item.user_email}</div>
+                  <Link
+                    href={`/admin/clientes/${item.user_id}`}
+                    className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] hover:underline"
+                  >
+                    {item.user_name}
+                  </Link>
+                  <div className="mt-0.5 text-sm">
+                    <Link
+                      href={`/admin/clientes/${item.user_id}`}
+                      className="text-[var(--muted)] hover:text-[var(--accent)] hover:underline"
+                    >
+                      {item.user_email}
+                    </Link>
+                  </div>
                 </td>
                 <td className="p-4 align-top whitespace-nowrap">
                   R$ {item.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}

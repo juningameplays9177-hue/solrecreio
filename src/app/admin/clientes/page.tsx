@@ -52,19 +52,34 @@ export default async function AdminClientesPage() {
                   {rows.map((u) => {
                     const id = Number(u.id);
                     const bal = Number(u.cashback_balance ?? 0);
+                    const detailHref = `/admin/clientes/${id}`;
                     return (
                       <tr key={id} className="border-b border-[var(--border)]/60">
-                        <td className="p-4 font-medium">{String(u.name)}</td>
-                        <td className="p-4 text-[var(--muted)]">{String(u.email)}</td>
+                        <td className="p-4 font-medium">
+                          <Link
+                            href={detailHref}
+                            className="text-[var(--foreground)] hover:text-[var(--accent)] hover:underline"
+                          >
+                            {String(u.name)}
+                          </Link>
+                        </td>
+                        <td className="p-4 text-[var(--muted)]">
+                          <Link
+                            href={detailHref}
+                            className="hover:text-[var(--accent)] hover:underline"
+                          >
+                            {String(u.email)}
+                          </Link>
+                        </td>
                         <td className="p-4 whitespace-nowrap tabular-nums">
                           R$ {bal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </td>
                         <td className="p-4">
                           <Link
-                            href={`/admin/clientes/${id}`}
+                            href={detailHref}
                             className="text-base font-medium text-[var(--accent)] hover:underline"
                           >
-                            Ver cashbacks
+                            Ver ficha completa
                           </Link>
                         </td>
                       </tr>

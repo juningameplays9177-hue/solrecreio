@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -175,8 +176,20 @@ export function AdminCashbackTable({
             return (
               <tr key={inv.id} className="border-b border-[var(--border)]/60">
                 <td className="p-4 align-top">
-                  <div className="font-medium">{inv.user_name}</div>
-                  <div className="mt-0.5 text-sm text-[var(--muted)]">{inv.user_email}</div>
+                  <Link
+                    href={`/admin/clientes/${inv.user_id}`}
+                    className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] hover:underline"
+                  >
+                    {inv.user_name}
+                  </Link>
+                  <div className="mt-0.5 text-sm">
+                    <Link
+                      href={`/admin/clientes/${inv.user_id}`}
+                      className="text-[var(--muted)] hover:text-[var(--accent)] hover:underline"
+                    >
+                      {inv.user_email}
+                    </Link>
+                  </div>
                 </td>
                 <td className="p-4 align-top whitespace-nowrap">
                   R$ {Number(inv.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
