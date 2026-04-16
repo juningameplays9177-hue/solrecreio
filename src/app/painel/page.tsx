@@ -7,7 +7,6 @@ import { PainelProfileCompletionCard } from "@/components/painel-profile-complet
 import { PainelCashbackForm } from "@/components/painel-cashback-form";
 import { PainelRedemptionGate } from "@/components/painel-redemption-gate";
 import { CashbackRedemptionsList } from "@/components/cashback-redemptions-list";
-import { PainelCashbackWallet } from "@/components/painel-cashback-wallet";
 import { clampUserCashbackBalanceToMax } from "@/lib/clamp-user-cashback-balance";
 import { CASHBACK_WALLET_MAX_BRL } from "@/lib/cashback-wallet-constants";
 import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
@@ -215,9 +214,6 @@ export default async function PainelPage() {
           <>
             <div className="mt-6">
               <ClientNotifications />
-            </div>
-            <div className="mt-6">
-              <PainelCashbackWallet />
             </div>
             <PainelCashbackForm />
           </>

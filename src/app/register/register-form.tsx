@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { AuthAccessShell } from "@/components/auth/auth-access-shell";
-import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
-import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
 import { readAuthApiJson } from "@/lib/read-auth-api-response";
 import { registrationFormSchema, strongPasswordSchema } from "@/lib/validators";
 
@@ -14,9 +12,6 @@ const inputClass =
 
 const labelClass =
   "mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#9a7209]";
-
-const googleBtnLight =
-  "border-amber-200/80 bg-white text-slate-800 shadow-sm hover:border-amber-300 hover:bg-gradient-to-br hover:from-amber-50/90 hover:to-white hover:shadow-md";
 
 const highlightCards = [
   {
@@ -65,8 +60,6 @@ export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledEmail = searchParams.get("email") ?? "";
-  const { runGoogleLogin, googleLoading, googleError, setGoogleError } =
-    useGoogleAuthRedirect();
   const [name, setName] = useState("");
   const [email, setEmail] = useState(prefilledEmail);
   const [password, setPassword] = useState("");
@@ -143,7 +136,7 @@ export function RegisterForm() {
     <AuthAccessShell
       variant="light"
       title="Crie sua conta"
-      subtitle="Use o Google ou cadastre-se com e-mail e senha. CPF e telefone são opcionais aqui; se preencher os dois corretamente, o cadastro já fica completo."
+      subtitle="Cadastre-se com e-mail e senha. CPF e telefone são opcionais aqui; se preencher os dois corretamente, o cadastro já fica completo."
       footer={
         <p>
           Já tem conta?{" "}
@@ -168,31 +161,6 @@ export function RegisterForm() {
             </p>
           </div>
         ))}
-      </div>
-
-      <HomeGoogleAuthSection
-        googleLoading={googleLoading}
-        googleError={googleError}
-        runGoogleLogin={runGoogleLogin}
-        disabled={loading}
-        buttonClassName={googleBtnLight}
-        errorClassName="text-red-600"
-        onBeforeGoogle={() => {
-          setError(null);
-          setSuccess(null);
-          setGoogleError(null);
-        }}
-      />
-
-      <div className="relative my-6" aria-hidden>
-        <div className="absolute inset-0 flex items-center">
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
-        </div>
-        <div className="relative flex justify-center text-xs font-semibold uppercase tracking-[0.2em] text-[#9a7209]">
-          <span className="rounded-full border border-amber-200/80 bg-gradient-to-r from-amber-50/95 via-white to-red-50/80 px-4 py-1 shadow-sm">
-            ou com e-mail
-          </span>
-        </div>
       </div>
 
       <form
