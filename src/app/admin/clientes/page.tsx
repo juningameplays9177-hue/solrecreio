@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminClientesTable } from "@/components/admin-clientes-table";
 import { getPool } from "@/lib/db";
 import type { RowDataPacket } from "mysql2";
 
@@ -16,6 +16,13 @@ export default async function AdminClientesPage() {
   } catch {
     dbError = "Não foi possível carregar clientes (confira o MySQL e as migrações).";
   }
+
+  const clients = rows.map((u) => ({
+    id: Number(u.id),
+    name: String(u.name),
+    email: String(u.email),
+    cashback_balance: Number(u.cashback_balance ?? 0),
+  }));
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-1 sm:px-0">
@@ -37,58 +44,7 @@ export default async function AdminClientesPage() {
             <p className="text-base text-[var(--muted)]">Nenhum cliente ainda.</p>
           </div>
         ) : (
-          <div className="w-full rounded-3xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-md sm:p-7 md:p-8">
-            <div className="scroll-touch overflow-x-auto rounded-2xl border border-[var(--border)] bg-white">
-              <table className="w-full min-w-[700px] text-left text-base">
-                <thead>
-                  <tr className="border-b border-[var(--border)] bg-slate-100">
-                    <th className="p-4 font-semibold">Nome</th>
-                    <th className="p-4 font-semibold">E-mail</th>
-                    <th className="p-4 font-semibold">Saldo cashback</th>
-                    <th className="p-4 font-semibold"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((u) => {
-                    const id = Number(u.id);
-                    const bal = Number(u.cashback_balance ?? 0);
-                    const detailHref = `/admin/clientes/${id}`;
-                    return (
-                      <tr key={id} className="border-b border-[var(--border)]/60">
-                        <td className="p-4 font-medium">
-                          <Link
-                            href={detailHref}
-                            className="text-[var(--foreground)] hover:text-[var(--accent)] hover:underline"
-                          >
-                            {String(u.name)}
-                          </Link>
-                        </td>
-                        <td className="p-4 text-[var(--muted)]">
-                          <Link
-                            href={detailHref}
-                            className="hover:text-[var(--accent)] hover:underline"
-                          >
-                            {String(u.email)}
-                          </Link>
-                        </td>
-                        <td className="p-4 whitespace-nowrap tabular-nums">
-                          R$ {bal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="p-4">
-                          <Link
-                            href={detailHref}
-                            className="text-base font-medium text-[var(--accent)] hover:underline"
-                          >
-                            Ver ficha completa
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminClientesTable clients={clients} />
         )}
       </div>
     </div>
