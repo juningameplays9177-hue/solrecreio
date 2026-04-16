@@ -15,8 +15,6 @@ const items: { href: string; label: string }[] = [
 
   { href: "/painel", label: "Painel" },
 
-  { href: "/", label: "Site público" },
-
 ];
 
 
