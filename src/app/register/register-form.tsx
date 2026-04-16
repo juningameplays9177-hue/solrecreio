@@ -129,11 +129,7 @@ export function RegisterForm() {
         }
         const data = parsed.data;
         setSuccess("Conta criada. Redirecionando…");
-        if (data.profileComplete === false) {
-          router.push("/completar-cadastro");
-        } else {
-          router.push("/mercado");
-        }
+        router.push("/painel");
       } finally {
         setLoading(false);
       }

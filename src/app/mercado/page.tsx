@@ -6,7 +6,7 @@ export default async function MercadoPage() {
   const session = await getSessionFromCookies();
   if (!session) redirect("/login");
   if (session.role === "ADMIN") redirect("/admin");
-  if (!session.profileComplete) redirect("/completar-cadastro");
+  if (!session.profileComplete) redirect("/painel");
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">

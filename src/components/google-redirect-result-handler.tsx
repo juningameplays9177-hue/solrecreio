@@ -35,10 +35,8 @@ export function GoogleRedirectResultHandler() {
           router.push(qs ? `/register?${qs}` : "/register");
         } else if (out.role === "ADMIN") {
           router.push("/admin");
-        } else if (out.profileComplete === false) {
-          router.push("/completar-cadastro");
         } else {
-          router.push("/mercado");
+          router.push("/painel");
         }
         router.refresh();
       } catch (e) {

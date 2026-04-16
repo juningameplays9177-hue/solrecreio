@@ -52,8 +52,6 @@ export function LoginForm() {
         const data = parsed.data;
         if (data.role === "ADMIN") {
           router.push("/admin");
-        } else if (data.profileComplete === false) {
-          router.push("/completar-cadastro");
         } else {
           router.push("/painel");
         }

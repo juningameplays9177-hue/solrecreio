@@ -29,18 +29,13 @@ export async function middleware(request: NextRequest) {
   const key = new TextEncoder().encode(secret);
 
   let role: string | undefined;
-  let profileComplete = true;
 
   if (token) {
     try {
       const { payload } = await jwtVerify(token, key);
       role = typeof payload.role === "string" ? payload.role : undefined;
-      if (typeof payload.profileComplete === "boolean") {
-        profileComplete = payload.profileComplete;
-      }
     } catch {
       role = undefined;
-      profileComplete = true;
     }
   }
 
@@ -51,8 +46,8 @@ export async function middleware(request: NextRequest) {
     if (role === "ADMIN") {
       return noStore(NextResponse.redirect(new URL("/admin", request.url)));
     }
-    if (role === "CLIENT" && profileComplete) {
-      return noStore(NextResponse.redirect(new URL("/mercado", request.url)));
+    if (role === "CLIENT") {
+      return noStore(NextResponse.redirect(new URL("/painel", request.url)));
     }
     return noStore(NextResponse.next());
   }

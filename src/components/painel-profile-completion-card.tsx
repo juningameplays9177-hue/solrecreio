@@ -50,13 +50,20 @@ export function PainelProfileCompletionCard() {
   }
 
   return (
-    <div className="mb-8 rounded-2xl border-2 border-[var(--accent)]/40 bg-amber-50/90 p-5 shadow-sm sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900">
-        Complete seu cadastro para usar o cashback
-      </h2>
+    <div
+      id="completar-cadastro-painel"
+      className="mb-8 scroll-mt-24 rounded-2xl border-2 border-[var(--accent)]/40 bg-amber-50/90 p-5 shadow-sm sm:p-6"
+    >
+      <h2 className="text-lg font-semibold text-slate-900">Terminar cadastro no painel</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-700">
-        Informe CPF e telefone (WhatsApp). Depois poderá enviar notas fiscais e acompanhar o saldo
-        aqui mesmo.
+        <span className="font-semibold text-slate-900">Opcional</span>
+        {" — "}
+        Se informar CPF e telefone válidos agora, você já usa este painel por completo — envio de
+        nota fiscal, carteira de cashback e <strong>resgate em cupom</strong> — sem a etapa separada
+        &quot;completar cadastro&quot;.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-slate-700">
+        Preencha os campos abaixo (mesmos dados usados em &quot;completar cadastro&quot;).
       </p>
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
         <div>

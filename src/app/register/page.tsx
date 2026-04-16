@@ -6,7 +6,7 @@ export default async function RegisterPage() {
   const session = await getSessionFromCookies();
   if (session?.role === "ADMIN") redirect("/admin");
   if (session?.role === "CLIENT") {
-    redirect(session.profileComplete ? "/painel" : "/completar-cadastro");
+    redirect("/painel");
   }
 
   return <RegisterForm />;

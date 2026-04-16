@@ -5,7 +5,7 @@ import { getPool } from "@/lib/db";
 import { ClientNotifications } from "@/components/client-notifications";
 import { PainelProfileCompletionCard } from "@/components/painel-profile-completion-card";
 import { PainelCashbackForm } from "@/components/painel-cashback-form";
-import { PainelCashbackRedemptionForm } from "@/components/painel-cashback-redemption-form";
+import { PainelRedemptionGate } from "@/components/painel-redemption-gate";
 import { CashbackRedemptionsList } from "@/components/cashback-redemptions-list";
 import { PainelCashbackWallet } from "@/components/painel-cashback-wallet";
 import { ensureCashbackRedemptionsSchema } from "@/lib/cashback-redemptions";
@@ -206,7 +206,18 @@ export default async function PainelPage() {
               <PainelCashbackWallet />
             </div>
             <PainelCashbackForm />
-            <PainelCashbackRedemptionForm availableBalance={balance} />
+          </>
+        )}
+
+        {!dbError && (
+          <PainelRedemptionGate
+            profileComplete={session.profileComplete}
+            availableBalance={balance}
+          />
+        )}
+
+        {!dbError && session.profileComplete && (
+          <>
             <div className="mt-8">
               <p className="text-sm font-medium text-[var(--foreground)] sm:text-base">
                 Suas solicitações
