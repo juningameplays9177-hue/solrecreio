@@ -1,29 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { HomeGoogleAuthSection } from "@/components/home-google-auth-section";
-import { useGoogleAuthRedirect } from "@/lib/use-google-auth-redirect";
 
 export function WelcomeAuthCard() {
-  const { runGoogleLogin, googleLoading, googleError, setGoogleError } =
-    useGoogleAuthRedirect();
-
   return (
     <div className="mt-10 w-full max-w-lg sm:mt-12">
-      <HomeGoogleAuthSection
-        googleLoading={googleLoading}
-        googleError={googleError}
-        runGoogleLogin={runGoogleLogin}
-        onBeforeGoogle={() => setGoogleError(null)}
-      />
-      <div className="relative my-6" aria-hidden>
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[var(--border)]" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase tracking-wide text-[var(--muted)]">
-          <span className="bg-white px-3">ou</span>
-        </div>
-      </div>
       <div className="flex flex-col gap-3">
         <Link
           href="/login"
