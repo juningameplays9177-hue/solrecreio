@@ -13,15 +13,10 @@ import {
 } from "@/lib/auth";
 
 import {
-
   assertAllowedInvoiceFile,
-
-  CASHBACK_UPLOAD_DIR,
-
   ensureUploadDir,
-
+  getCashbackUploadDir,
   safeInvoiceFilename,
-
 } from "@/lib/upload-invoice";
 
 import { clampUserCashbackBalanceToMax } from "@/lib/clamp-user-cashback-balance";
@@ -201,7 +196,7 @@ export async function POST(request: Request) {
 
       const diskName = `${userId}-${Date.now()}-${safe}`;
 
-      const absPath = join(CASHBACK_UPLOAD_DIR, diskName);
+      const absPath = join(getCashbackUploadDir(), diskName);
 
       await writeFile(absPath, buf);
 

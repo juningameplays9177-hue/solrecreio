@@ -1,10 +1,10 @@
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
-import { resolve } from "path";
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { getServerEnvErrors } from "@/lib/server-env";
+import { resolveStoredInvoiceAbsolutePath } from "@/lib/upload-invoice";
 import type { RowDataPacket } from "mysql2";
 
 export const runtime = "nodejs";
@@ -53,14 +53,18 @@ export async function GET(
       return NextResponse.json({ error: "Arquivo não enviado nesta solicitação." }, { status: 404 });
     }
 
-    const relative = String(row.file_path).replace(/\\/g, "/");
-    if (!relative.startsWith("uploads/cashback/")) {
+    const abs = resolveStoredInvoiceAbsolutePath(String(row.file_path));
+    if (!abs) {
       return NextResponse.json({ error: "Caminho inválido." }, { status: 400 });
     }
-    const abs = resolve(process.cwd(), ...relative.split("/"));
-    const root = resolve(process.cwd(), "uploads", "cashback");
-    if (!abs.startsWith(root) || !existsSync(abs)) {
-      return NextResponse.json({ error: "Arquivo não encontrado no disco." }, { status: 404 });
+    if (!existsSync(abs)) {
+      return NextResponse.json(
+        {
+          error:
+            "Arquivo não encontrado no disco. Se a app foi redeployada, use uma pasta persistente: defina CASHBACK_UPLOAD_DIR no servidor com o mesmo caminho onde os uploads são guardados.",
+        },
+        { status: 404 }
+      );
     }
 
     const downloadName =
