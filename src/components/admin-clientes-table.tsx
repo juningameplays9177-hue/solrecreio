@@ -7,8 +7,19 @@ export type AdminClienteRow = {
   id: number;
   name: string;
   email: string;
+  phone: string | null;
   cashback_balance: number;
 };
+
+/** Dígitos para https://wa.me/ — assume BR (55) quando há 10 ou 11 dígitos sem DDI. */
+function whatsAppDigitsFromStoredPhone(raw: string | null | undefined): string | null {
+  if (raw == null || raw === "") return null;
+  const d = String(raw).replace(/\D/g, "");
+  if (d.length < 8) return null;
+  if (d.startsWith("55") && d.length >= 12) return d;
+  if (d.length === 10 || d.length === 11) return `55${d}`;
+  return d;
+}
 
 function normalizeSearch(s: string): string {
   return s
@@ -112,6 +123,7 @@ export function AdminClientesTable({ clients }: { clients: AdminClienteRow[] }) 
             <tbody>
               {filtered.map((u) => {
                 const detailHref = `/admin/clientes/${u.id}`;
+                const waDigits = whatsAppDigitsFromStoredPhone(u.phone);
                 return (
                   <tr key={u.id} className="border-b border-[var(--border)]/60">
                     <td className="p-4 font-medium">
@@ -137,12 +149,28 @@ export function AdminClientesTable({ clients }: { clients: AdminClienteRow[] }) 
                       })}
                     </td>
                     <td className="p-4">
-                      <Link
-                        href={detailHref}
-                        className="text-base font-medium text-[var(--accent)] hover:underline"
-                      >
-                        Ver ficha completa
-                      </Link>
+                      <div className="flex flex-col items-center gap-2 sm:items-end">
+                        {waDigits ? (
+                          <a
+                            href={`https://wa.me/${waDigits}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-xl bg-[#25D366] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-[filter,box-shadow] hover:brightness-105 hover:shadow active:scale-[0.99]"
+                          >
+                            WhatsApp
+                          </a>
+                        ) : (
+                          <span className="max-w-[11rem] text-center text-xs text-[var(--muted)]">
+                            Sem telefone no cadastro
+                          </span>
+                        )}
+                        <Link
+                          href={detailHref}
+                          className="text-center text-base font-medium text-[var(--accent)] hover:underline"
+                        >
+                          Ver ficha completa
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );

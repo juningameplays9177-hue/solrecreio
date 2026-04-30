@@ -21,6 +21,7 @@ export default async function AdminClientesPage() {
     id: Number(u.id),
     name: String(u.name),
     email: String(u.email),
+    phone: u.phone == null ? null : String(u.phone),
     cashback_balance: Number(u.cashback_balance ?? 0),
   }));
 
