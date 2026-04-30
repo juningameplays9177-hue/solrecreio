@@ -1,0 +1,17 @@
+---
+description: Após alterações no repositório, commit e push automáticos para o Git
+alwaysApply: true
+---
+
+# Git: commit e push após alterações
+
+Quando esta sessão **alterar ficheiros** neste projeto (código, config de produto segura, regras, etc.) e a tarefa estiver concluída:
+
+1. Ver `git status`.
+2. Fazer **stage só** do que faz parte da alteração (nunca `.env`, `.env.local`, ficheiros com credenciais, `.next/`, `node_modules/`, nem artefactos locais).
+3. **`git commit`** com mensagem curta e clara em português (imperativo ou descrição objetiva do que mudou).
+4. **`git push`** para o branch atual (normalmente `main`).
+
+Se não houver alterações relevantes para commit, não inventar commits vazios. Se o push falhar (rede, permissões, branch protegido), reportar o erro e o que falta fazer.
+
+O utilizador prefere **não** ter de pedir “manda no git” de cada vez.
