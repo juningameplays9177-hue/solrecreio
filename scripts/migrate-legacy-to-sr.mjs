@@ -1,8 +1,17 @@
 import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import mysql from "mysql2/promise";
 import { execSync } from "node:child_process";
 import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
 import { normalizeMysqlHostForNode } from "./normalize-mysql-host.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SR_MIGRATION_SQL = path.join(
+  __dirname,
+  "../prisma/migrations/20260714120000_init_sr_schema/migration.sql",
+);
 
 const LEGACY_USER_TABLE = "users";
 const LEGACY_PURCHASE_TABLE = "cashback_invoices";
@@ -215,6 +224,32 @@ async function mergeFromHoryzonn(targetConn, horyzonnUrl) {
   }
 }
 
+async function applySrSchema(conn) {
+  if (!fs.existsSync(SR_MIGRATION_SQL)) {
+    throw new Error(`Ficheiro de migração não encontrado: ${SR_MIGRATION_SQL}`);
+  }
+  const sql = fs.readFileSync(SR_MIGRATION_SQL, "utf8");
+  await conn.query({ sql, multipleStatements: true });
+}
+
+async function markPrismaMigrationApplied(databaseUrl) {
+  const prismaEnv = { ...process.env, DATABASE_URL: databaseUrl };
+  try {
+    execSync("npx prisma migrate deploy", { stdio: "inherit", env: prismaEnv });
+  } catch (err) {
+    const msg = String(err?.stderr ?? err?.message ?? err);
+    if (msg.includes("P3005")) {
+      console.log("Base não vazia sem histórico Prisma; a marcar migração como aplicada...");
+      execSync('npx prisma migrate resolve --applied "20260714120000_init_sr_schema"', {
+        stdio: "inherit",
+        env: prismaEnv,
+      });
+      return;
+    }
+    console.warn("Aviso: prisma migrate deploy falhou (schema já aplicado via SQL).", msg);
+  }
+}
+
 async function main() {
   const targetUrl = resolveDatabaseUrlFromEnv();
   if (!targetUrl) {
@@ -224,16 +259,17 @@ async function main() {
 
   const target = parseUrl(targetUrl);
   console.log(`Alvo: ${target.database} @ ${target.host}`);
-  console.log("\n1) Aplicar schema sr_* (prisma migrate deploy)...");
-  try {
-    execSync("npx prisma migrate deploy", { stdio: "inherit" });
-  } catch {
-    console.log("migrate deploy falhou; tentando prisma db push...");
-    execSync("npx prisma db push --accept-data-loss", { stdio: "inherit" });
-  }
 
-  const conn = await mysql.createConnection(target);
+  process.env.DATABASE_URL = targetUrl;
+
+  const conn = await mysql.createConnection({
+    ...target,
+    multipleStatements: true,
+  });
   try {
+    console.log("\n1) Criar tabelas sr_* (CREATE IF NOT EXISTS, sem apagar legado)...");
+    await applySrSchema(conn);
+
     console.log("\n2) Migrar dados legados dentro de u494944867_sol...");
     await migrateUsersFromLegacy(conn);
     await migratePurchasesFromLegacy(conn);
@@ -269,7 +305,11 @@ async function main() {
       "created_at",
     ]);
 
+    console.log("\n3) Merge opcional de u494944867_horyzonn...");
     await mergeFromHoryzonn(conn, process.env.HORYZONN_DATABASE_URL?.trim());
+
+    console.log("\n4) Registar migração Prisma...");
+    await markPrismaMigrationApplied(targetUrl);
 
     console.log("\n✅ Migração concluída. O projeto usa somente", target.database);
     console.log("   Tabelas: sr_User, sr_Purchase, sr_CashbackRedemption, ...");
