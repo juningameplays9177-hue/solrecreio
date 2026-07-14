@@ -70,7 +70,7 @@ export async function POST(
 
       const [rows] = await conn.query<RowDataPacket[]>(
         `SELECT id, user_id, amount, status
-         FROM cashback_redemptions
+         FROM sr_CashbackRedemption
          WHERE id = ?
          FOR UPDATE`,
         [id]
@@ -93,7 +93,7 @@ export async function POST(
 
       if (action === "approve") {
         const [userRows] = await conn.query<RowDataPacket[]>(
-          "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
+          "SELECT cashback_balance FROM sr_User WHERE id = ? FOR UPDATE",
           [userIdForNotify]
         );
         const balance = Number(userRows[0]?.cashback_balance ?? 0);
@@ -109,7 +109,7 @@ export async function POST(
           const candidate = generateCouponCode();
           try {
             await conn.query(
-              `UPDATE cashback_redemptions
+              `UPDATE sr_CashbackRedemption
                SET status = 'APPROVED',
                    coupon_code = ?,
                    admin_note = ?,
@@ -134,7 +134,7 @@ export async function POST(
         });
       } else {
         await conn.query(
-          `UPDATE cashback_redemptions
+          `UPDATE sr_CashbackRedemption
            SET status = 'REJECTED',
                admin_note = ?,
                reviewed_at = NOW(),

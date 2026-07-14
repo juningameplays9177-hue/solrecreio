@@ -68,7 +68,7 @@ export async function POST(
       await conn.beginTransaction();
 
       const [rows] = await conn.query<RowDataPacket[]>(
-        "SELECT id, user_id, amount, status FROM cashback_invoices WHERE id = ? FOR UPDATE",
+        "SELECT id, user_id, amount, status FROM sr_Purchase WHERE id = ? FOR UPDATE",
         [id]
       );
       const inv = rows[0];
@@ -100,13 +100,13 @@ export async function POST(
         cappedApproval = capped;
 
         await conn.query(
-          `UPDATE cashback_invoices SET status = 'APPROVED', credited_amount = ?, reviewed_at = NOW(), admin_note = ?
+          `UPDATE sr_Purchase SET status = 'APPROVED', credited_amount = ?, reviewed_at = NOW(), admin_note = ?
            WHERE id = ?`,
           [credited, note || null, id]
         );
       } else {
         await conn.query(
-          `UPDATE cashback_invoices SET status = 'REJECTED', reviewed_at = NOW(), admin_note = ?
+          `UPDATE sr_Purchase SET status = 'REJECTED', reviewed_at = NOW(), admin_note = ?
            WHERE id = ?`,
           [note || null, id]
         );

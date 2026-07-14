@@ -46,7 +46,7 @@ export async function GET() {
       })[]
     >(
       `SELECT id, amount, status, coupon_code, admin_note, created_at, reviewed_at
-       FROM cashback_redemptions
+       FROM sr_CashbackRedemption
        WHERE user_id = ?
        ORDER BY created_at DESC
        LIMIT 50`,
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
       await clampUserCashbackBalanceToMax(conn, userId);
 
       const [userRows] = await conn.query<RowDataPacket[]>(
-        "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
+        "SELECT cashback_balance FROM sr_User WHERE id = ? FOR UPDATE",
         [userId]
       );
       const balance = Number(userRows[0]?.cashback_balance ?? 0);
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       }
 
       const [pendingRows] = await conn.query<RowDataPacket[]>(
-        "SELECT COALESCE(SUM(amount), 0) AS reserved_amount FROM cashback_redemptions WHERE user_id = ? AND status = 'PENDING' FOR UPDATE",
+        "SELECT COALESCE(SUM(amount), 0) AS reserved_amount FROM sr_CashbackRedemption WHERE user_id = ? AND status = 'PENDING' FOR UPDATE",
         [userId]
       );
       const reserved = Number(pendingRows[0]?.reserved_amount ?? 0);
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
       }
 
       const [result] = await conn.query<ResultSetHeader>(
-        `INSERT INTO cashback_redemptions (user_id, amount, status)
+        `INSERT INTO sr_CashbackRedemption (user_id, amount, status)
          VALUES (?, ?, 'PENDING')`,
         [userId, amount.toFixed(2)]
       );

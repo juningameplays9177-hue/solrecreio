@@ -22,7 +22,7 @@ export async function POST() {
     const userId = Number(client.sub);
     const pool = getPool();
     await pool.query(
-      "UPDATE notifications SET read_at = NOW() WHERE user_id = ? AND read_at IS NULL",
+      "UPDATE sr_Notification SET read_at = NOW() WHERE user_id = ? AND read_at IS NULL",
       [userId]
     );
 

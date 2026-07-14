@@ -12,15 +12,15 @@ export default async function AdminHomePage() {
   try {
     const pool = getPool();
     const [p] = await pool.query<RowDataPacket[]>(
-      "SELECT COUNT(*) AS c FROM cashback_invoices WHERE status = 'PENDING'"
+      "SELECT COUNT(*) AS c FROM sr_Purchase WHERE status = 'PENDING'"
     );
     pendingNf = Number(p[0]?.c ?? 0);
     const [r] = await pool.query<RowDataPacket[]>(
-      "SELECT COUNT(*) AS c FROM cashback_redemptions WHERE status = 'PENDING'"
+      "SELECT COUNT(*) AS c FROM sr_CashbackRedemption WHERE status = 'PENDING'"
     );
     pendingRedemptions = Number(r[0]?.c ?? 0);
     const [c] = await pool.query<RowDataPacket[]>(
-      "SELECT COUNT(*) AS c FROM users WHERE role = 'CLIENT'"
+      "SELECT COUNT(*) AS c FROM sr_User WHERE role = 'CLIENT'"
     );
     totalClients = Number(c[0]?.c ?? 0);
   } catch {

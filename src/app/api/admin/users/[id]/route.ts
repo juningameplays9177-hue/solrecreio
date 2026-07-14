@@ -40,7 +40,7 @@ export async function PATCH(
 
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT id, role FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, role FROM sr_User WHERE id = ? LIMIT 1",
       [targetId]
     );
     const u = rows[0];
@@ -49,7 +49,7 @@ export async function PATCH(
     }
 
     const hash = await bcrypt.hash(parsed.data.password, 10);
-    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [hash, targetId]);
+    await pool.query("UPDATE sr_User SET password_hash = ? WHERE id = ?", [hash, targetId]);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

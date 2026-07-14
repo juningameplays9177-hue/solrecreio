@@ -32,8 +32,8 @@ export async function GET() {
     >(
       `SELECT i.id, i.user_id, i.amount, i.status, i.original_filename, i.created_at,
               u.name AS user_name, u.email AS user_email
-       FROM cashback_invoices i
-       JOIN users u ON u.id = i.user_id
+       FROM sr_Purchase i
+       JOIN sr_User u ON u.id = i.user_id
        ORDER BY
          CASE WHEN i.status = 'PENDING' THEN 0 ELSE 1 END,
          i.created_at DESC

@@ -20,8 +20,8 @@ export async function GET() {
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT u.id, u.name, u.email, u.cpf, u.phone, u.cashback_balance, u.created_at,
-              (SELECT COUNT(*) FROM cashback_invoices c WHERE c.user_id = u.id) AS invoices_count
-       FROM users u
+              (SELECT COUNT(*) FROM sr_Purchase c WHERE c.user_id = u.id) AS invoices_count
+       FROM sr_User u
        WHERE u.role = 'CLIENT'
        ORDER BY u.name ASC`
     );

@@ -7,7 +7,7 @@ export async function notifyUser(
   body: string | null
 ): Promise<void> {
   await pool.query(
-    `INSERT INTO notifications (user_id, title, body) VALUES (?, ?, ?)`,
+    `INSERT INTO sr_Notification (user_id, title, body) VALUES (?, ?, ?)`,
     [userId, title.slice(0, 255), body ? body.slice(0, 5000) : null]
   );
 }

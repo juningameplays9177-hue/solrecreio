@@ -15,8 +15,8 @@ export default async function AdminCashbackPage() {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT i.id, i.user_id, i.amount, i.credited_amount, i.status, i.original_filename, i.created_at,
               u.name AS user_name, u.email AS user_email
-       FROM cashback_invoices i
-       JOIN users u ON u.id = i.user_id
+       FROM sr_Purchase i
+       JOIN sr_User u ON u.id = i.user_id
        ORDER BY
          CASE WHEN i.status = 'PENDING' THEN 0 ELSE 1 END,
          i.created_at DESC
@@ -26,7 +26,7 @@ export default async function AdminCashbackPage() {
   } catch (e) {
     console.error("admin/cashback:", e);
     dbError =
-      "Não foi possível carregar as notas fiscais. Verifique a conexão com o MySQL e se a tabela cashback_invoices existe (migração do projeto).";
+      "Não foi possível carregar as notas fiscais. Verifique a conexão com o MySQL e se a tabela sr_Purchase existe (migração do projeto).";
   }
 
   const serialized = invoices.map((row) => ({

@@ -13,8 +13,8 @@ export default async function AdminResgatesPage() {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT r.id, r.user_id, r.amount, r.status, r.coupon_code, r.admin_note, r.created_at, r.reviewed_at,
               u.name AS user_name, u.email AS user_email
-       FROM cashback_redemptions r
-       JOIN users u ON u.id = r.user_id
+       FROM sr_CashbackRedemption r
+       JOIN sr_User u ON u.id = r.user_id
        ORDER BY
          CASE WHEN r.status = 'PENDING' THEN 0 ELSE 1 END,
          r.created_at DESC

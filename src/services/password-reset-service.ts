@@ -23,7 +23,7 @@ async function loadUserIdByEmail(
   email: string
 ): Promise<number | null> {
   const [rows] = await conn.query<RowDataPacket[]>(
-    "SELECT id FROM users WHERE email = ? LIMIT 1",
+    "SELECT id FROM sr_User WHERE email = ? LIMIT 1",
     [email]
   );
   const id = rows[0]?.id;
@@ -42,7 +42,7 @@ export async function createPasswordResetFlow(
   if (userId == null) return null;
 
   await conn.query(
-    `UPDATE password_reset_tokens
+    `UPDATE sr_PasswordResetToken
      SET used_at = NOW()
      WHERE user_id = ? AND used_at IS NULL`,
     [userId]
@@ -53,7 +53,7 @@ export async function createPasswordResetFlow(
   const expires = new Date(Date.now() + TOKEN_TTL_MS);
 
   await conn.query(
-    `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+    `INSERT INTO sr_PasswordResetToken (user_id, token_hash, expires_at)
      VALUES (?, ?, ?)`,
     [userId, tokenHash, expires]
   );
@@ -112,7 +112,7 @@ export async function resetPasswordWithToken(
 
   const [rows] = await conn.query<RowDataPacket[]>(
     `SELECT id, user_id, expires_at, used_at
-     FROM password_reset_tokens
+     FROM sr_PasswordResetToken
      WHERE token_hash = ?
      FOR UPDATE`,
     [tokenHash]
@@ -135,12 +135,12 @@ export async function resetPasswordWithToken(
   const userId = Number(row.user_id);
   const passwordHash = await bcrypt.hash(newPassword, 10);
 
-  await conn.query(`UPDATE users SET password_hash = ? WHERE id = ?`, [
+  await conn.query(`UPDATE sr_User SET password_hash = ? WHERE id = ?`, [
     passwordHash,
     userId,
   ]);
   await conn.query(
-    `UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?`,
+    `UPDATE sr_PasswordResetToken SET used_at = NOW() WHERE id = ?`,
     [row.id]
   );
 
@@ -156,7 +156,7 @@ export async function validateResetTokenRow(
   }
   const tokenHash = hashResetToken(rawToken);
   const [rows] = await conn.query<RowDataPacket[]>(
-    `SELECT expires_at, used_at FROM password_reset_tokens WHERE token_hash = ? LIMIT 1`,
+    `SELECT expires_at, used_at FROM sr_PasswordResetToken WHERE token_hash = ? LIMIT 1`,
     [tokenHash]
   );
   const row = rows[0];

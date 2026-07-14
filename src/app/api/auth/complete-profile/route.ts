@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     const pool = getPool();
 
     const [dup] = await pool.query<RowDataPacket[]>(
-      "SELECT id FROM users WHERE cpf = ? AND id <> ? LIMIT 1",
+      "SELECT id FROM sr_User WHERE cpf = ? AND id <> ? LIMIT 1",
       [cpf, userId]
     );
     if (dup.length > 0) {
@@ -78,12 +78,12 @@ export async function POST(request: Request) {
     }
 
     await pool.query(
-      "UPDATE users SET cpf = ?, phone = ? WHERE id = ? AND role = 'CLIENT'",
+      "UPDATE sr_User SET cpf = ?, phone = ? WHERE id = ? AND role = 'CLIENT'",
       [cpf, phone, userId]
     );
 
     const [rows] = await pool.query<UserRow[]>(
-      "SELECT id, email, name, cpf, phone, role FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, email, name, cpf, phone, role FROM sr_User WHERE id = ? LIMIT 1",
       [userId]
     );
     const user = rows[0];

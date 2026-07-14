@@ -110,7 +110,7 @@ export default async function PainelPage() {
     const pool = getPool();
     await clampUserCashbackBalanceToMax(pool, userId);
     const [balRows] = await pool.query<RowDataPacket[]>(
-      "SELECT cashback_balance, cpf, phone FROM users WHERE id = ? LIMIT 1",
+      "SELECT cashback_balance, cpf, phone FROM sr_User WHERE id = ? LIMIT 1",
       [userId]
     );
     balance = Number(balRows[0]?.cashback_balance ?? 0);
@@ -125,7 +125,7 @@ export default async function PainelPage() {
 
     const [invRows] = await pool.query<RowDataPacket[]>(
       `SELECT id, amount, status, original_filename, created_at
-       FROM cashback_invoices WHERE user_id = ?
+       FROM sr_Purchase WHERE user_id = ?
        ORDER BY created_at DESC LIMIT 30`,
       [userId]
     );
@@ -134,7 +134,7 @@ export default async function PainelPage() {
     await ensureCashbackRedemptionsSchema(pool);
     const [redemptionRows] = await pool.query<RowDataPacket[]>(
       `SELECT id, amount, status, coupon_code, admin_note, created_at, reviewed_at
-       FROM cashback_redemptions
+       FROM sr_CashbackRedemption
        WHERE user_id = ?
        ORDER BY created_at DESC
        LIMIT 30`,

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const pool = getPool();
 
     const [rows] = await pool.query<UserRow[]>({
-      sql: "SELECT id, email, name, password_hash, role, cpf, phone FROM users WHERE email = ? LIMIT 1",
+      sql: "SELECT id, email, name, password_hash, role, cpf, phone FROM sr_User WHERE email = ? LIMIT 1",
       values: [email],
       timeout: MYSQL_QUERY_TIMEOUT_MS,
     });

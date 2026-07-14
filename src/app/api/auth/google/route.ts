@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const email = emailRaw.toLowerCase().trim();
     const pool = getPool();
     const [rows] = await pool.query<UserRow[]>(
-      "SELECT id, email, name, role, cpf, phone FROM users WHERE email = ? LIMIT 1",
+      "SELECT id, email, name, role, cpf, phone FROM sr_User WHERE email = ? LIMIT 1",
       [email]
     );
 
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         user.role === "CLIENT" &&
         googleDisplayName !== user.name
       ) {
-        await pool.query("UPDATE users SET name = ? WHERE id = ? AND role = 'CLIENT'", [
+        await pool.query("UPDATE sr_User SET name = ? WHERE id = ? AND role = 'CLIENT'", [
           googleDisplayName,
           user.id,
         ]);

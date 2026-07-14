@@ -35,7 +35,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(password, 10);
 
   await conn.query(
-    `INSERT INTO users (email, password_hash, name, cpf, phone, role)
+    `INSERT INTO sr_User (email, password_hash, name, cpf, phone, role)
      VALUES (?, ?, ?, NULL, NULL, 'ADMIN')
      ON DUPLICATE KEY UPDATE
        password_hash = VALUES(password_hash),

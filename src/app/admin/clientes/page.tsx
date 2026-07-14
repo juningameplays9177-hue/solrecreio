@@ -10,7 +10,7 @@ export default async function AdminClientesPage() {
     const pool = getPool();
     const [r] = await pool.query<RowDataPacket[]>(
       `SELECT id, name, email, cpf, phone, cashback_balance, created_at
-       FROM users WHERE role = 'CLIENT' ORDER BY name ASC`
+       FROM sr_User WHERE role = 'CLIENT' ORDER BY name ASC`
     );
     rows = r;
   } catch {

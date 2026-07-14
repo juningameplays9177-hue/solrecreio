@@ -27,7 +27,7 @@ export async function GET() {
 
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
-      `SELECT id, name, email, created_at FROM users WHERE role = 'ADMIN' ORDER BY name ASC`
+      `SELECT id, name, email, created_at FROM sr_User WHERE role = 'ADMIN' ORDER BY name ASC`
     );
 
     return NextResponse.json({ users: rows });
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const pool = getPool();
 
     const [exists] = await pool.query<RowDataPacket[]>(
-      "SELECT id FROM users WHERE email = ? LIMIT 1",
+      "SELECT id FROM sr_User WHERE email = ? LIMIT 1",
       [emailNorm]
     );
     if (exists.length > 0) {
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 
     const hash = await bcrypt.hash(password, 10);
     await pool.query(
-      `INSERT INTO users (email, password_hash, name, cpf, phone, role, cashback_balance)
+      `INSERT INTO sr_User (email, password_hash, name, cpf, phone, role, cashback_balance)
        VALUES (?, ?, ?, NULL, NULL, 'ADMIN', 0)`,
       [emailNorm, hash, name.trim()]
     );

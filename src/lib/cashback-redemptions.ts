@@ -8,7 +8,7 @@ export async function ensureCashbackRedemptionsSchema(pool: Pool): Promise<void>
   if (redemptionSchemaReady) return;
 
   await pool.query(`
-CREATE TABLE IF NOT EXISTS cashback_redemptions (
+CREATE TABLE IF NOT EXISTS sr_CashbackRedemption (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS cashback_redemptions (
   reviewed_at TIMESTAMP NULL,
   approved_at TIMESTAMP NULL,
   rejected_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_redemptions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_redemptions_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_cashback_redemptions_coupon (coupon_code),
   INDEX idx_cashback_redemptions_user (user_id),
   INDEX idx_cashback_redemptions_status (status),

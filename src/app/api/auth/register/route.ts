@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     if (cpf) {
       const [dup] = await pool.query<RowDataPacket[]>({
-        sql: "SELECT email, cpf FROM users WHERE email = ? OR cpf = ? LIMIT 1",
+        sql: "SELECT email, cpf FROM sr_User WHERE email = ? OR cpf = ? LIMIT 1",
         values: [email, cpf],
         timeout: qTimeout,
       });
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       }
     } else {
       const [existingEmail] = await pool.query<RowDataPacket[]>({
-        sql: "SELECT id FROM users WHERE email = ? LIMIT 1",
+        sql: "SELECT id FROM sr_User WHERE email = ? LIMIT 1",
         values: [email],
         timeout: qTimeout,
       });
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query<ResultSetHeader>({
-      sql: `INSERT INTO users (email, password_hash, name, cpf, phone, role)
+      sql: `INSERT INTO sr_User (email, password_hash, name, cpf, phone, role)
        VALUES (?, ?, ?, ?, ?, 'CLIENT')`,
       values: [email, passwordHash, name, cpf, phone],
       timeout: qTimeout,

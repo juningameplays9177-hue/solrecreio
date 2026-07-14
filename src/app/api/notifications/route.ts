@@ -23,14 +23,14 @@ export async function GET() {
     const userId = Number(client.sub);
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
-      `SELECT id, title, body, read_at, created_at FROM notifications
+      `SELECT id, title, body, read_at, created_at FROM sr_Notification
        WHERE user_id = ?
        ORDER BY created_at DESC LIMIT 50`,
       [userId]
     );
 
     const [countRows] = await pool.query<RowDataPacket[]>(
-      `SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND read_at IS NULL`,
+      `SELECT COUNT(*) AS c FROM sr_Notification WHERE user_id = ? AND read_at IS NULL`,
       [userId]
     );
     const unreadCount = Number(countRows[0]?.c ?? 0);

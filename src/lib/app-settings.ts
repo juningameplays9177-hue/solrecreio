@@ -10,13 +10,13 @@ export async function ensureAppSettingsSchema(pool: Pool): Promise<void> {
   if (appSettingsSchemaReady) return;
   try {
     await pool.query(`
-CREATE TABLE IF NOT EXISTS app_settings (
+CREATE TABLE IF NOT EXISTS sr_AppSetting (
   \`key\` VARCHAR(64) NOT NULL PRIMARY KEY,
   value TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `);
     await pool.query(
-      `INSERT IGNORE INTO app_settings (\`key\`, value) VALUES (?, '10')`,
+      `INSERT IGNORE INTO sr_AppSetting (\`key\`, value) VALUES (?, '10')`,
       [KEY]
     );
     appSettingsSchemaReady = true;
@@ -29,7 +29,7 @@ export async function getCashbackPercentage(pool: Pool): Promise<number> {
   try {
     await ensureAppSettingsSchema(pool);
     const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT value FROM app_settings WHERE `key` = ? LIMIT 1",
+      "SELECT value FROM sr_AppSetting WHERE `key` = ? LIMIT 1",
       [KEY]
     );
     const raw = rows[0]?.value;

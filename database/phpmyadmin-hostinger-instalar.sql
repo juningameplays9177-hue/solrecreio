@@ -1,6 +1,5 @@
 
 
-
 -- =============================================================================
 -- Sol do Recreio — instalação via phpMyAdmin (Hostinger ou outro MySQL)
 -- =============================================================================
@@ -14,7 +13,7 @@
 
 SET NAMES utf8mb4;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS sr_User (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
@@ -28,26 +27,26 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uniq_cpf (cpf)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS app_settings (
+CREATE TABLE IF NOT EXISTS sr_AppSetting (
   `key` VARCHAR(64) NOT NULL PRIMARY KEY,
   value TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO app_settings (`key`, value) VALUES ('cashback_percentage', '10');
+INSERT IGNORE INTO sr_AppSetting (`key`, value) VALUES ('cashback_percentage', '10');
 
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS sr_Notification (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   title VARCHAR(255) NOT NULL,
   body TEXT NULL,
   read_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_notif_user (user_id),
   INDEX idx_notif_unread (user_id, read_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS cashback_invoices (
+CREATE TABLE IF NOT EXISTS sr_Purchase (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -58,7 +57,7 @@ CREATE TABLE IF NOT EXISTS cashback_invoices (
   admin_note TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   reviewed_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_cashback_status (status),
   INDEX idx_cashback_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -68,11 +67,11 @@ CREATE TABLE IF NOT EXISTS cashback_invoices (
 -- Descomente linha a linha; se der "Duplicate column name", passe à seguinte.
 -- =============================================================================
 --
--- ALTER TABLE users ADD COLUMN cashback_balance DECIMAL(10,2) NOT NULL DEFAULT 0;
--- ALTER TABLE cashback_invoices ADD COLUMN credited_amount DECIMAL(10,2) NULL DEFAULT NULL AFTER amount;
+-- ALTER TABLE sr_User ADD COLUMN cashback_balance DECIMAL(10,2) NOT NULL DEFAULT 0;
+-- ALTER TABLE sr_Purchase ADD COLUMN credited_amount DECIMAL(10,2) NULL DEFAULT NULL AFTER amount;
 --
--- CREATE TABLE IF NOT EXISTS app_settings (...); -- já está acima
--- CREATE TABLE IF NOT EXISTS notifications (...);   -- já está acima
+-- CREATE TABLE IF NOT EXISTS sr_AppSetting (...); -- já está acima
+-- CREATE TABLE IF NOT EXISTS sr_Notification (...);   -- já está acima
 
 -- =============================================================================
 -- Utilizador admin: não insira senha em texto puro. Opções:

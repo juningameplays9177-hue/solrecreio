@@ -46,7 +46,7 @@ async function insertLedger(
       ? JSON.stringify(opts.metadata)
       : null;
   await conn.query<ResultSetHeader>(
-    `INSERT INTO cashback_ledger
+    `INSERT INTO sr_CashbackLedger
      (user_id, kind, amount, balance_after, source, ref_type, ref_id, metadata)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -74,13 +74,13 @@ export async function creditCashbackCapped(
   const want = roundMoneyBrl(rawCredit);
   if (!Number.isFinite(want) || want <= 0) {
     const [rows] = await conn.query<RowDataPacket[]>(
-      "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
+      "SELECT cashback_balance FROM sr_User WHERE id = ? FOR UPDATE",
       [userId]
     );
     let balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
     if (balance > CASHBACK_WALLET_MAX_BRL) {
       await conn.query(
-        `UPDATE users SET cashback_balance = ? WHERE id = ?`,
+        `UPDATE sr_User SET cashback_balance = ? WHERE id = ?`,
         [CASHBACK_WALLET_MAX_BRL.toFixed(2), userId]
       );
       balance = CASHBACK_WALLET_MAX_BRL;
@@ -89,13 +89,13 @@ export async function creditCashbackCapped(
   }
 
   const [rows] = await conn.query<RowDataPacket[]>(
-    "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
+    "SELECT cashback_balance FROM sr_User WHERE id = ? FOR UPDATE",
     [userId]
   );
   let balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
   if (balance > CASHBACK_WALLET_MAX_BRL) {
     await conn.query(
-      `UPDATE users SET cashback_balance = ? WHERE id = ?`,
+      `UPDATE sr_User SET cashback_balance = ? WHERE id = ?`,
       [CASHBACK_WALLET_MAX_BRL.toFixed(2), userId]
     );
     balance = CASHBACK_WALLET_MAX_BRL;
@@ -107,7 +107,7 @@ export async function creditCashbackCapped(
 
   if (credited > 0) {
     await conn.query(
-      `UPDATE users SET cashback_balance = cashback_balance + ? WHERE id = ?`,
+      `UPDATE sr_User SET cashback_balance = cashback_balance + ? WHERE id = ?`,
       [credited.toFixed(2), userId]
     );
     await insertLedger(conn, userId, "EARN", credited, balanceAfter, opts);
@@ -131,13 +131,13 @@ export async function debitCashbackWallet(
   }
 
   const [rows] = await conn.query<RowDataPacket[]>(
-    "SELECT cashback_balance FROM users WHERE id = ? FOR UPDATE",
+    "SELECT cashback_balance FROM sr_User WHERE id = ? FOR UPDATE",
     [userId]
   );
   let balance = roundMoneyBrl(Number(rows[0]?.cashback_balance ?? 0));
   if (balance > CASHBACK_WALLET_MAX_BRL) {
     await conn.query(
-      `UPDATE users SET cashback_balance = ? WHERE id = ?`,
+      `UPDATE sr_User SET cashback_balance = ? WHERE id = ?`,
       [CASHBACK_WALLET_MAX_BRL.toFixed(2), userId]
     );
     balance = CASHBACK_WALLET_MAX_BRL;
@@ -148,7 +148,7 @@ export async function debitCashbackWallet(
 
   const balanceAfter = roundMoneyBrl(balance - amount);
   await conn.query(
-    `UPDATE users SET cashback_balance = cashback_balance - ? WHERE id = ?`,
+    `UPDATE sr_User SET cashback_balance = cashback_balance - ? WHERE id = ?`,
     [amount.toFixed(2), userId]
   );
   await insertLedger(conn, userId, "USE", amount, balanceAfter, opts);
@@ -169,7 +169,7 @@ export async function getCashbackWalletSummary(
   await clampUserCashbackBalanceToMax(pool, userId);
 
   const [uRows] = await pool.query<RowDataPacket[]>(
-    "SELECT cashback_balance FROM users WHERE id = ? LIMIT 1",
+    "SELECT cashback_balance FROM sr_User WHERE id = ? LIMIT 1",
     [userId]
   );
   const saldo = roundMoneyBrl(Number(uRows[0]?.cashback_balance ?? 0));
@@ -202,7 +202,7 @@ export async function getCashbackWalletSummary(
   });
 
   const rowSql = `SELECT id, kind, amount, balance_after, source, ref_type, ref_id, metadata, created_at
-     FROM cashback_ledger
+     FROM sr_CashbackLedger
      WHERE user_id = ? AND kind = ?
      ORDER BY created_at DESC, id DESC
      LIMIT 100`;

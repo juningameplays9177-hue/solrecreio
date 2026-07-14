@@ -20,6 +20,10 @@
     "db:migrate-cashback": "node scripts/migrate-cashback.mjs",
     "db:migrate-password-reset-wallet": "node scripts/migrate-password-reset-wallet.mjs",
     "db:migrate-admin-features": "node scripts/migrate-admin-features.mjs",
+    "db:migrate-sr": "node scripts/migrate-legacy-to-sr.mjs",
+    "db:push": "prisma db push",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "postinstall": "prisma generate",
     "firebase:service-account-line": "node scripts/service-account-to-env.mjs",
     "qr:entrar-png": "node scripts/generate-qr-entrar-png.mjs",
     "deploy:firebase": "firebase deploy --only hosting",
@@ -29,6 +33,7 @@
     "@capacitor/android": "^8.3.0",
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
+    "@prisma/client": "^6.16.0",
     "bcryptjs": "^3.0.2",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.7.0",
@@ -54,6 +59,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "firebase-tools": "^14.0.0",
+    "prisma": "^6.16.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

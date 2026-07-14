@@ -9,7 +9,7 @@ CREATE DATABASE IF NOT EXISTS sol_do_recreio
 
 USE sol_do_recreio;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS sr_User (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uniq_cpf (cpf)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS cashback_invoices (
+CREATE TABLE IF NOT EXISTS sr_Purchase (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS cashback_invoices (
   admin_note TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   reviewed_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_cashback_status (status),
   INDEX idx_cashback_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

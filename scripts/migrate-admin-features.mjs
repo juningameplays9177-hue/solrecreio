@@ -17,21 +17,21 @@ function parseMysqlUrl(connectionString) {
 }
 
 const settingsSql = `
-CREATE TABLE IF NOT EXISTS app_settings (
+CREATE TABLE IF NOT EXISTS sr_AppSetting (
   \`key\` VARCHAR(64) NOT NULL PRIMARY KEY,
   value TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 const notificationsSql = `
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS sr_Notification (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   title VARCHAR(255) NOT NULL,
   body TEXT NULL,
   read_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_notif_user (user_id),
   INDEX idx_notif_unread (user_id, read_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -50,16 +50,16 @@ async function main() {
 
   await conn.query(settingsSql);
   await conn.query(
-    `INSERT IGNORE INTO app_settings (\`key\`, value) VALUES ('cashback_percentage', '10')`
+    `INSERT IGNORE INTO sr_AppSetting (\`key\`, value) VALUES ('cashback_percentage', '10')`
   );
 
   await conn.query(notificationsSql);
 
   try {
     await conn.query(
-      "ALTER TABLE cashback_invoices ADD COLUMN credited_amount DECIMAL(10,2) NULL DEFAULT NULL AFTER amount"
+      "ALTER TABLE sr_Purchase ADD COLUMN credited_amount DECIMAL(10,2) NULL DEFAULT NULL AFTER amount"
     );
-    console.log("Coluna credited_amount adicionada em cashback_invoices.");
+    console.log("Coluna credited_amount adicionada em sr_Purchase.");
   } catch (e) {
     if (e.code === "ER_DUP_FIELDNAME") {
       console.log("Coluna credited_amount já existe.");

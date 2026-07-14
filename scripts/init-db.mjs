@@ -4,7 +4,7 @@ import { resolveDatabaseUrlFromEnv } from "./resolve-database-url.mjs";
 import { normalizeMysqlHostForNode } from "./normalize-mysql-host.mjs";
 
 const usersSql = `
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS sr_User (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
@@ -20,28 +20,28 @@ CREATE TABLE IF NOT EXISTS users (
 `;
 
 const settingsSql = `
-CREATE TABLE IF NOT EXISTS app_settings (
+CREATE TABLE IF NOT EXISTS sr_AppSetting (
   \`key\` VARCHAR(64) NOT NULL PRIMARY KEY,
   value TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 const notificationsSql = `
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS sr_Notification (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   title VARCHAR(255) NOT NULL,
   body TEXT NULL,
   read_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_notif_user (user_id),
   INDEX idx_notif_unread (user_id, read_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 const invoicesSql = `
-CREATE TABLE IF NOT EXISTS cashback_invoices (
+CREATE TABLE IF NOT EXISTS sr_Purchase (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -52,21 +52,21 @@ CREATE TABLE IF NOT EXISTS cashback_invoices (
   admin_note TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   reviewed_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_cashback_status (status),
   INDEX idx_cashback_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 const passwordResetSql = `
-CREATE TABLE IF NOT EXISTS password_reset_tokens (
+CREATE TABLE IF NOT EXISTS sr_PasswordResetToken (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   token_hash CHAR(64) NOT NULL,
   expires_at DATETIME NOT NULL,
   used_at DATETIME NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_pwd_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pwd_reset_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_pwd_reset_token_hash (token_hash),
   INDEX idx_pwd_reset_user (user_id),
   INDEX idx_pwd_reset_expires (expires_at)
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 `;
 
 const cashbackLedgerSql = `
-CREATE TABLE IF NOT EXISTS cashback_ledger (
+CREATE TABLE IF NOT EXISTS sr_CashbackLedger (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   kind ENUM('EARN', 'USE') NOT NULL,
@@ -85,13 +85,13 @@ CREATE TABLE IF NOT EXISTS cashback_ledger (
   ref_id INT UNSIGNED NULL,
   metadata JSON NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_cashback_ledger_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_ledger_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_cashback_ledger_user_created (user_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 const redemptionsSql = `
-CREATE TABLE IF NOT EXISTS cashback_redemptions (
+CREATE TABLE IF NOT EXISTS sr_CashbackRedemption (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS cashback_redemptions (
   reviewed_at TIMESTAMP NULL,
   approved_at TIMESTAMP NULL,
   rejected_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_redemptions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_redemptions_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_cashback_redemptions_coupon (coupon_code),
   INDEX idx_cashback_redemptions_user (user_id),
   INDEX idx_cashback_redemptions_status (status),
@@ -143,7 +143,7 @@ async function main() {
   await conn.query(usersSql);
   await conn.query(settingsSql);
   await conn.query(
-    `INSERT IGNORE INTO app_settings (\`key\`, value) VALUES ('cashback_percentage', '10')`
+    `INSERT IGNORE INTO sr_AppSetting (\`key\`, value) VALUES ('cashback_percentage', '10')`
   );
   await conn.query(notificationsSql);
   await conn.query(invoicesSql);
@@ -152,7 +152,7 @@ async function main() {
   await conn.query(cashbackLedgerSql);
   await conn.end();
   console.log(
-    `Banco "${dbName}", users, cashback, password_reset_tokens e cashback_ledger criados ou já existentes.`
+    `Banco "${dbName}", sr_User, sr_Purchase, sr_PasswordResetToken e sr_CashbackLedger criados ou já existentes.`
   );
 }
 

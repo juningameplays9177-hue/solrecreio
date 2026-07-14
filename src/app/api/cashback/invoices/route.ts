@@ -58,7 +58,7 @@ export async function GET() {
 
     const [balanceRows] = await pool.query<RowDataPacket[]>(
 
-      "SELECT cashback_balance FROM users WHERE id = ? LIMIT 1",
+      "SELECT cashback_balance FROM sr_User WHERE id = ? LIMIT 1",
 
       [userId]
 
@@ -88,7 +88,7 @@ export async function GET() {
 
       `SELECT id, amount, status, original_filename, created_at
 
-       FROM cashback_invoices WHERE user_id = ?
+       FROM sr_Purchase WHERE user_id = ?
 
        ORDER BY created_at DESC LIMIT 50`,
 
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
 
     const [result] = await pool.query<ResultSetHeader>(
 
-      `INSERT INTO cashback_invoices (user_id, amount, status, file_path, original_filename)
+      `INSERT INTO sr_Purchase (user_id, amount, status, file_path, original_filename)
 
        VALUES (?, ?, 'PENDING', ?, ?)`,
 

@@ -32,7 +32,7 @@ export async function POST(
 
     const pool = getPool();
     const [r] = await pool.query<RowDataPacket[]>(
-      "SELECT id FROM notifications WHERE id = ? AND user_id = ? LIMIT 1",
+      "SELECT id FROM sr_Notification WHERE id = ? AND user_id = ? LIMIT 1",
       [nid, userId]
     );
     if (!r[0]) {
@@ -40,7 +40,7 @@ export async function POST(
     }
 
     await pool.query(
-      "UPDATE notifications SET read_at = NOW() WHERE id = ? AND user_id = ? AND read_at IS NULL",
+      "UPDATE sr_Notification SET read_at = NOW() WHERE id = ? AND user_id = ? AND read_at IS NULL",
       [nid, userId]
     );
 

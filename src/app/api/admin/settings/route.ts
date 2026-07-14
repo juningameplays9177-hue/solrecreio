@@ -57,7 +57,7 @@ export async function PATCH(request: Request) {
     await ensureAppSettingsSchema(pool);
     const v = String(parsed.data.cashbackPercentage);
     await pool.query(
-      `INSERT INTO app_settings (\`key\`, value) VALUES ('cashback_percentage', ?)
+      `INSERT INTO sr_AppSetting (\`key\`, value) VALUES ('cashback_percentage', ?)
        ON DUPLICATE KEY UPDATE value = VALUES(value)`,
       [v]
     );

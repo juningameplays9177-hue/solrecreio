@@ -45,7 +45,7 @@ export async function GET(
 
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT file_path, original_filename FROM cashback_invoices WHERE id = ? LIMIT 1",
+      "SELECT file_path, original_filename FROM sr_Purchase WHERE id = ? LIMIT 1",
       [id]
     );
     const row = rows[0];

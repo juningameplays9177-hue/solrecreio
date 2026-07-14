@@ -17,14 +17,14 @@ function parseMysqlUrl(connectionString) {
 }
 
 const passwordResetSql = `
-CREATE TABLE IF NOT EXISTS password_reset_tokens (
+CREATE TABLE IF NOT EXISTS sr_PasswordResetToken (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   token_hash CHAR(64) NOT NULL,
   expires_at DATETIME NOT NULL,
   used_at DATETIME NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_pwd_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pwd_reset_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_pwd_reset_token_hash (token_hash),
   INDEX idx_pwd_reset_user (user_id),
   INDEX idx_pwd_reset_expires (expires_at)
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 `;
 
 const ledgerSql = `
-CREATE TABLE IF NOT EXISTS cashback_ledger (
+CREATE TABLE IF NOT EXISTS sr_CashbackLedger (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   kind ENUM('EARN', 'USE') NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS cashback_ledger (
   ref_id INT UNSIGNED NULL,
   metadata JSON NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_cashback_ledger_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_ledger_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_cashback_ledger_user_created (user_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
@@ -61,17 +61,17 @@ async function main() {
 
   try {
     await conn.query(passwordResetSql);
-    console.log("Tabela password_reset_tokens OK.");
+    console.log("Tabela sr_PasswordResetToken OK.");
     await conn.query(ledgerSql);
-    console.log("Tabela cashback_ledger OK.");
+    console.log("Tabela sr_CashbackLedger OK.");
 
     const [rows] = await conn.query(
-      "SELECT COUNT(*) AS c FROM users WHERE cashback_balance > 100"
+      "SELECT COUNT(*) AS c FROM sr_User WHERE cashback_balance > 100"
     );
     const c = Number(rows[0]?.c ?? 0);
     if (c > 0) {
       await conn.query(
-        "UPDATE users SET cashback_balance = 100 WHERE cashback_balance > 100"
+        "UPDATE sr_User SET cashback_balance = 100 WHERE cashback_balance > 100"
       );
       console.log(
         `Ajustados ${c} usuário(s) com saldo acima do teto de R$ 100,00.`

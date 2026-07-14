@@ -17,7 +17,7 @@ function parseMysqlUrl(connectionString) {
 }
 
 const invoicesSql = `
-CREATE TABLE IF NOT EXISTS cashback_invoices (
+CREATE TABLE IF NOT EXISTS sr_Purchase (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -27,14 +27,14 @@ CREATE TABLE IF NOT EXISTS cashback_invoices (
   admin_note TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   reviewed_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   INDEX idx_cashback_status (status),
   INDEX idx_cashback_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 const redemptionsSql = `
-CREATE TABLE IF NOT EXISTS cashback_redemptions (
+CREATE TABLE IF NOT EXISTS sr_CashbackRedemption (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS cashback_redemptions (
   reviewed_at TIMESTAMP NULL,
   approved_at TIMESTAMP NULL,
   rejected_at TIMESTAMP NULL,
-  CONSTRAINT fk_cashback_redemptions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_redemptions_user FOREIGN KEY (user_id) REFERENCES sr_User(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_cashback_redemptions_coupon (coupon_code),
   INDEX idx_cashback_redemptions_user (user_id),
   INDEX idx_cashback_redemptions_status (status),
@@ -66,27 +66,27 @@ async function main() {
 
   try {
     await conn.query(
-      "ALTER TABLE users ADD COLUMN cashback_balance DECIMAL(10,2) NOT NULL DEFAULT 0"
+      "ALTER TABLE sr_User ADD COLUMN cashback_balance DECIMAL(10,2) NOT NULL DEFAULT 0"
     );
-    console.log("Coluna users.cashback_balance adicionada.");
+    console.log("Coluna sr_User.cashback_balance adicionada.");
   } catch (e) {
     if (e.code === "ER_DUP_FIELDNAME") {
-      console.log("Coluna users.cashback_balance já existe.");
+      console.log("Coluna sr_User.cashback_balance já existe.");
     } else {
       throw e;
     }
   }
 
   await conn.query(invoicesSql);
-  console.log("Tabela cashback_invoices OK.");
+  console.log("Tabela sr_Purchase OK.");
   await conn.query(redemptionsSql);
-  console.log("Tabela cashback_redemptions OK.");
+  console.log("Tabela sr_CashbackRedemption OK.");
 
   try {
     await conn.query(
-      "ALTER TABLE cashback_invoices ADD COLUMN credited_amount DECIMAL(10,2) NULL DEFAULT NULL AFTER amount"
+      "ALTER TABLE sr_Purchase ADD COLUMN credited_amount DECIMAL(10,2) NULL DEFAULT NULL AFTER amount"
     );
-    console.log("Coluna credited_amount adicionada em cashback_invoices.");
+    console.log("Coluna credited_amount adicionada em sr_Purchase.");
   } catch (e) {
     if (e.code === "ER_DUP_FIELDNAME") {
       console.log("Coluna credited_amount já existe.");
