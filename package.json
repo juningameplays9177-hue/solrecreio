@@ -7,7 +7,7 @@
     "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\"",
     "dev:fresh": "npm run dev:clean && npm run dev",
     "check": "npm run lint && npm run build",
-    "build": "next build",
+    "build": "node scripts/ensure-build-permissions.mjs && next build",
     "start": "node scripts/start-prod.mjs",
     "lint": "eslint",
     "android:add": "npx cap add android",

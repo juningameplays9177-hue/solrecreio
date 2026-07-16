@@ -27,8 +27,13 @@ if (-not (Test-Path (Join-Path $staging "src\app"))) {
 
 foreach ($zip in @($zipOut, $zipDesktop)) {
   if (Test-Path $zip) { Remove-Item $zip -Force }
-  Compress-Archive -Path (Join-Path $staging "*") -DestinationPath $zip -CompressionLevel Optimal
 }
+
+# tar -a cria .zip com paths / (Linux); Compress-Archive usa \ e pode falhar na Hostinger.
+Push-Location $staging
+tar -a -c -f $zipOut *
+Pop-Location
+Copy-Item $zipOut $zipDesktop -Force
 
 $sizeMB = [math]::Round((Get-Item $zipOut).Length / 1MB, 2)
 Write-Host "OK: $zipOut (${sizeMB} MB)"
@@ -39,7 +44,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($zipOut)
 $top = $zip.Entries | ForEach-Object { ($_.FullName -split '/')[0] } | Sort-Object -Unique
 Write-Host "Pastas/ficheiros na raiz do zip:" ($top -join ", ")
-$hasPkg = $zip.Entries | Where-Object { $_.FullName -eq "package.json" }
+$hasPkg = $zip.Entries | Where-Object { $_.FullName -eq "package.json" -or $_.FullName -eq "./package.json" }
 if (-not $hasPkg) { throw "ERRO: package.json nao esta na raiz do zip." }
 Write-Host "package.json na raiz: OK"
 $zip.Dispose()
