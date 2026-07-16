@@ -136,14 +136,15 @@ async function migrateGenericById(conn, sourceTable, targetTable, columns) {
     console.log(`— ${sourceTable} não existe; ignorando.`);
     return;
   }
-  const cols = columns.join(", ");
+  const q = (col) => `\`${col}\``;
+  const cols = columns.map(q).join(", ");
   const before = await countRows(conn, targetTable);
   await conn.query(`
     INSERT INTO \`${targetTable}\` (${cols})
     SELECT ${cols} FROM \`${sourceTable}\`
     ON DUPLICATE KEY UPDATE ${columns
       .filter((c) => c !== "id")
-      .map((c) => `${c} = VALUES(${c})`)
+      .map((c) => `${q(c)} = VALUES(${q(c)})`)
       .join(", ")}
   `);
   const after = await countRows(conn, targetTable);
