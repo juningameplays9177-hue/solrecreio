@@ -23,7 +23,7 @@
     "db:migrate-sr": "node scripts/migrate-legacy-to-sr.mjs",
     "db:push": "prisma db push",
     "db:migrate:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate",
+    "postinstall": "node scripts/prisma-generate.mjs",
     "firebase:service-account-line": "node scripts/service-account-to-env.mjs",
     "qr:entrar-png": "node scripts/generate-qr-entrar-png.mjs",
     "deploy:firebase": "firebase deploy --only hosting",
